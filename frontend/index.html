@@ -4,13 +4,41 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SkillUp Chat</title>
+  <script>
+  (function(){try{var t=localStorage.getItem('su_theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}})();
+  </script>
   <style>
+    :root {
+      --bg:#0d0d1a; --surface:#1a1a2e; --surface-2:#1f1f35; --surface-3:#242437;
+      --border:#2a2a45; --border-2:#32324f; --text:#e2e2f0; --heading:#fff;
+      --muted:#666; --text-dim:#888; --text-soft:#ccc;
+      --accent-bg:#2a2048; --danger-bg:#2a1a1a; --shadow:rgba(0,0,0,0.4);
+      --overlay:rgba(255,255,255,.07); --overlay-2:rgba(255,255,255,.12); --overlay-3:rgba(255,255,255,.24);
+    }
+    :root[data-theme="light"] {
+      --bg:#f4f5fb; --surface:#ffffff; --surface-2:#eef0f8; --surface-3:#e8eaf4;
+      --border:#dcdff0; --border-2:#c9cde4; --text:#1c1c2e; --heading:#14142a;
+      --muted:#7a7a90; --text-dim:#5c5c74; --text-soft:#3c3c52;
+      --accent-bg:#e6e2ff; --danger-bg:#ffe8e8; --shadow:rgba(30,30,70,0.18);
+      --overlay:rgba(0,0,0,.06); --overlay-2:rgba(0,0,0,.08); --overlay-3:rgba(0,0,0,.16);
+    }
+    /* bubbles from others need dark text readable in light mode via vars; own bubble stays accent */
+    .btn-theme {
+      background: var(--surface-3); border: 1px solid var(--border-2); color: var(--text-dim);
+      width: 32px; height: 32px; border-radius: 50%; font-size: 15px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-theme:hover { border-color: #7c6cff; color: #7c6cff; }
+    #theme-toggle-login { position: fixed; top: 16px; right: 16px; }
+    .msg-row.own .bubble { color: #fff; }
+
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0d0d1a;
-      color: #e2e2f0;
+      background: var(--bg);
+      color: var(--text);
       height: 100vh;
       overflow: hidden;
     }
@@ -24,8 +52,8 @@
     }
 
     .login-card {
-      background: #1a1a2e;
-      border: 1px solid #2a2a45;
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: 18px;
       padding: 40px 36px;
       width: 360px;
@@ -34,13 +62,13 @@
     .login-logo {
       font-size: 28px;
       font-weight: 800;
-      color: #fff;
+      color: var(--heading);
       margin-bottom: 6px;
     }
 
     .login-sub {
       font-size: 13px;
-      color: #666;
+      color: var(--muted);
       margin-bottom: 28px;
     }
 
@@ -52,18 +80,18 @@
     }
 
     .field input {
-      background: #242437;
-      border: 1px solid #32324f;
+      background: var(--surface-3);
+      border: 1px solid var(--border-2);
       border-radius: 10px;
       padding: 12px 14px;
-      color: #e2e2f0;
+      color: var(--text);
       font-size: 14px;
       outline: none;
       transition: border-color 0.2s;
     }
 
     .field input:focus { border-color: #7c6cff; }
-    .field input::placeholder { color: #555; }
+    .field input::placeholder { color: var(--muted); }
 
     .btn {
       width: 100%;
@@ -100,8 +128,8 @@
     }
 
     .chat-header {
-      background: #1a1a2e;
-      border-bottom: 1px solid #2a2a45;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
       padding: 14px 20px;
       display: flex;
       align-items: center;
@@ -109,7 +137,7 @@
       flex-shrink: 0;
     }
 
-    .chat-title { font-size: 17px; font-weight: 700; color: #fff; }
+    .chat-title { font-size: 17px; font-weight: 700; color: var(--heading); }
 
     .header-right {
       display: flex;
@@ -119,8 +147,8 @@
 
     .user-badge {
       font-size: 12px;
-      color: #888;
-      background: #242437;
+      color: var(--text-dim);
+      background: var(--surface-3);
       padding: 4px 10px;
       border-radius: 20px;
     }
@@ -128,14 +156,14 @@
     .btn-logout {
       background: none;
       border: none;
-      color: #555;
+      color: var(--muted);
       font-size: 12px;
       cursor: pointer;
       padding: 4px 8px;
       border-radius: 6px;
       transition: color 0.15s, background 0.15s;
     }
-    .btn-logout:hover { color: #ff6b6b; background: #2a1a1a; }
+    .btn-logout:hover { color: #ff6b6b; background: var(--danger-bg); }
 
     /* ─── MESSAGES ─── */
     #messages-container {
@@ -183,12 +211,12 @@
 
     .msg-meta {
       font-size: 11px;
-      color: #555;
+      color: var(--muted);
     }
     .msg-row.own .msg-meta { text-align: right; }
 
     .bubble {
-      background: #1f1f35;
+      background: var(--surface-2);
       padding: 9px 14px;
       border-radius: 14px;
       font-size: 14px;
@@ -219,8 +247,8 @@
       display: flex;
       align-items: center;
       gap: 3px;
-      background: #1f1f35;
-      border: 1px solid #32324f;
+      background: var(--surface-2);
+      border: 1px solid var(--border-2);
       border-radius: 12px;
       padding: 2px 8px;
       font-size: 13px;
@@ -228,17 +256,17 @@
       transition: border-color 0.15s, background 0.15s;
       user-select: none;
     }
-    .rxn:hover, .rxn.mine { border-color: #7c6cff; background: #2a2048; }
-    .rxn-count { font-size: 11px; color: #888; }
+    .rxn:hover, .rxn.mine { border-color: #7c6cff; background: var(--accent-bg); }
+    .rxn-count { font-size: 11px; color: var(--text-dim); }
 
     .add-rxn {
       display: none;
       background: none;
-      border: 1px dashed #32324f;
+      border: 1px dashed var(--border-2);
       border-radius: 12px;
       padding: 2px 8px;
       font-size: 12px;
-      color: #555;
+      color: var(--muted);
       cursor: pointer;
       transition: border-color 0.15s, color 0.15s;
     }
@@ -248,8 +276,8 @@
     /* ─── EMOJI PICKER ─── */
     .emoji-picker {
       position: fixed;
-      background: #1f1f35;
-      border: 1px solid #32324f;
+      background: var(--surface-2);
+      border: 1px solid var(--border-2);
       border-radius: 14px;
       padding: 10px;
       display: flex;
@@ -257,7 +285,7 @@
       flex-wrap: wrap;
       width: 230px;
       z-index: 999;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      box-shadow: 0 10px 30px var(--shadow);
     }
 
     .emoji-opt {
@@ -268,12 +296,12 @@
       transition: background 0.1s;
       line-height: 1;
     }
-    .emoji-opt:hover { background: #32324f; }
+    .emoji-opt:hover { background: var(--border-2); }
 
     /* ─── INPUT AREA ─── */
     .input-area {
-      background: #1a1a2e;
-      border-top: 1px solid #2a2a45;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
       padding: 12px 16px;
       flex-shrink: 0;
     }
@@ -283,7 +311,7 @@
       align-items: center;
       gap: 10px;
       margin-bottom: 10px;
-      background: #242437;
+      background: var(--surface-3);
       border-radius: 10px;
       padding: 8px 12px;
     }
@@ -298,7 +326,7 @@
     .preview-info {
       flex: 1;
       font-size: 12px;
-      color: #888;
+      color: var(--text-dim);
     }
 
     .btn-remove-photo {
@@ -317,13 +345,13 @@
       align-items: center;
       gap: 10px;
       margin-bottom: 10px;
-      background: #242437;
+      background: var(--surface-3);
       border-radius: 10px;
       padding: 8px 12px;
     }
     .file-prev-icon { font-size: 22px; flex-shrink: 0; }
     .file-prev-name {
-      flex: 1; font-size: 13px; color: #ccc;
+      flex: 1; font-size: 13px; color: var(--text-soft);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .btn-remove-file {
@@ -336,7 +364,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      background: rgba(255,255,255,.07);
+      background: var(--overlay);
       border-radius: 10px;
       padding: 10px 12px;
       min-width: 180px;
@@ -348,12 +376,12 @@
     .fc-caption { font-size: 12px; opacity: .65; margin-top: 2px; }
     .fc-dl {
       flex-shrink: 0; width: 32px; height: 32px;
-      background: rgba(255,255,255,.12); border-radius: 50%;
+      background: var(--overlay-2); border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       text-decoration: none; color: inherit; font-size: 14px;
       transition: background .15s;
     }
-    .fc-dl:hover { background: rgba(255,255,255,.24); }
+    .fc-dl:hover { background: var(--overlay-3); }
 
     .input-row {
       display: flex;
@@ -365,9 +393,9 @@
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      border: 1px solid #32324f;
-      background: #242437;
-      color: #888;
+      border: 1px solid var(--border-2);
+      background: var(--surface-3);
+      color: var(--text-dim);
       font-size: 18px;
       display: flex;
       align-items: center;
@@ -380,11 +408,11 @@
 
     #message-input {
       flex: 1;
-      background: #242437;
-      border: 1px solid #32324f;
+      background: var(--surface-3);
+      border: 1px solid var(--border-2);
       border-radius: 20px;
       padding: 10px 16px;
-      color: #e2e2f0;
+      color: var(--text);
       font-size: 14px;
       font-family: inherit;
       outline: none;
@@ -395,7 +423,7 @@
       transition: border-color 0.2s;
     }
     #message-input:focus { border-color: #7c6cff; }
-    #message-input::placeholder { color: #555; }
+    #message-input::placeholder { color: var(--muted); }
 
     .btn-send {
       width: 40px;
@@ -418,7 +446,7 @@
     .status-bar {
       text-align: center;
       font-size: 11px;
-      color: #444;
+      color: var(--muted);
       padding: 3px;
       min-height: 18px;
       flex-shrink: 0;
@@ -428,20 +456,20 @@
     /* ─── SCROLLBAR ─── */
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #32324f; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
 
     /* ─── NAV TABS ─── */
     .nav-tabs {
       display: flex;
       gap: 4px;
-      background: #242437;
+      background: var(--surface-3);
       border-radius: 10px;
       padding: 3px;
     }
     .nav-tab {
       background: none;
       border: none;
-      color: #888;
+      color: var(--text-dim);
       font-size: 13px;
       font-weight: 600;
       padding: 6px 14px;
@@ -449,8 +477,8 @@
       cursor: pointer;
       transition: background 0.15s, color 0.15s;
     }
-    .nav-tab.active { background: #1a1a2e; color: #e2e2f0; }
-    .nav-tab:hover:not(.active) { color: #aaa; }
+    .nav-tab.active { background: var(--surface); color: var(--text); }
+    .nav-tab:hover:not(.active) { color: var(--text-soft); }
 
     /* ─── CHAT PAGE WRAPPER ─── */
     #chat-page {
@@ -471,22 +499,22 @@
     }
 
     .doc-upload-zone {
-      border: 2px dashed #32324f;
+      border: 2px dashed var(--border-2);
       border-radius: 16px;
       padding: 32px 20px;
       text-align: center;
       cursor: pointer;
       transition: border-color 0.2s, background 0.2s;
-      background: #1a1a2e;
+      background: var(--surface);
       user-select: none;
     }
     .doc-upload-zone:hover, .doc-upload-zone.drag-over {
       border-color: #7c6cff;
-      background: #1f1f35;
+      background: var(--surface-2);
     }
     .doc-upload-icon { font-size: 36px; margin-bottom: 10px; }
-    .doc-upload-title { font-size: 15px; font-weight: 600; color: #e2e2f0; margin-bottom: 6px; }
-    .doc-upload-sub { font-size: 12px; color: #666; margin-bottom: 16px; }
+    .doc-upload-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .doc-upload-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
     .doc-browse-btn {
       display: inline-block;
       background: #7c6cff;
@@ -500,11 +528,11 @@
       transition: opacity 0.15s;
     }
     .doc-browse-btn:hover { opacity: 0.85; }
-    .doc-upload-note { font-size: 11px; color: #555; margin-top: 8px; }
+    .doc-upload-note { font-size: 11px; color: var(--muted); margin-top: 8px; }
 
     .doc-selected-card {
-      background: #1f1f35;
-      border: 1px solid #32324f;
+      background: var(--surface-2);
+      border: 1px solid var(--border-2);
       border-radius: 12px;
       padding: 12px 14px;
       display: flex;
@@ -513,24 +541,24 @@
     }
     .doc-selected-header { display: flex; align-items: center; gap: 10px; }
     .doc-sel-icon { font-size: 22px; flex-shrink: 0; }
-    .doc-sel-name { flex: 1; font-size: 13px; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .doc-sel-name { flex: 1; font-size: 13px; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .doc-sel-clear { background: none; border: none; color: #ff6b6b; font-size: 20px; cursor: pointer; line-height: 1; }
 
     .doc-selected-body { display: flex; gap: 8px; align-items: center; }
     .doc-desc-input {
       flex: 1;
-      background: #242437;
-      border: 1px solid #32324f;
+      background: var(--surface-3);
+      border: 1px solid var(--border-2);
       border-radius: 8px;
       padding: 8px 12px;
-      color: #e2e2f0;
+      color: var(--text);
       font-size: 13px;
       font-family: inherit;
       outline: none;
       transition: border-color 0.2s;
     }
     .doc-desc-input:focus { border-color: #7c6cff; }
-    .doc-desc-input::placeholder { color: #555; }
+    .doc-desc-input::placeholder { color: var(--muted); }
     .btn-doc-upload {
       background: #7c6cff;
       color: #fff;
@@ -550,7 +578,7 @@
     .doc-status {
       text-align: center;
       font-size: 12px;
-      color: #555;
+      color: var(--muted);
       min-height: 16px;
     }
     .doc-status.error { color: #ff6b6b; }
@@ -559,19 +587,19 @@
     .doc-section-title {
       font-size: 11px;
       font-weight: 700;
-      color: #555;
+      color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.8px;
     }
 
     .doc-list { display: flex; flex-direction: column; gap: 8px; }
 
-    .doc-empty { text-align: center; padding: 40px 20px; color: #444; font-size: 14px; }
+    .doc-empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; }
     .doc-empty-icon { font-size: 32px; margin-bottom: 10px; }
 
     .doc-card {
-      background: #1a1a2e;
-      border: 1px solid #2a2a45;
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: 12px;
       padding: 12px 16px;
       display: flex;
@@ -579,20 +607,20 @@
       gap: 12px;
       transition: border-color 0.15s;
     }
-    .doc-card:hover { border-color: #32324f; }
+    .doc-card:hover { border-color: var(--border-2); }
     .doc-card-icon { font-size: 26px; flex-shrink: 0; }
     .doc-card-info { flex: 1; min-width: 0; }
     .doc-card-name {
       font-size: 14px;
       font-weight: 600;
-      color: #e2e2f0;
+      color: var(--text);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       margin-bottom: 2px;
     }
-    .doc-card-desc { font-size: 12px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
-    .doc-card-meta { font-size: 11px; color: #555; }
+    .doc-card-desc { font-size: 12px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+    .doc-card-meta { font-size: 11px; color: var(--muted); }
     .doc-uploader { color: #7c6cff; font-weight: 600; }
 
     .doc-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
@@ -600,9 +628,9 @@
       width: 32px;
       height: 32px;
       border-radius: 50%;
-      border: 1px solid #32324f;
-      background: #242437;
-      color: #888;
+      border: 1px solid var(--border-2);
+      background: var(--surface-3);
+      color: var(--text-dim);
       font-size: 13px;
       display: flex;
       align-items: center;
@@ -632,7 +660,7 @@
     .students-page-title {
       font-size: 11px;
       font-weight: 700;
-      color: #555;
+      color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.8px;
     }
@@ -645,36 +673,37 @@
       text-align: left;
       font-size: 11px;
       font-weight: 700;
-      color: #555;
+      color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
       padding: 8px 12px;
-      border-bottom: 1px solid #2a2a45;
+      border-bottom: 1px solid var(--border);
     }
 
     .students-table td {
       padding: 10px 12px;
-      border-bottom: 1px solid #1f1f35;
+      border-bottom: 1px solid var(--surface-2);
       vertical-align: middle;
     }
 
     .students-table tr:last-child td { border-bottom: none; }
-    .students-table tr:hover td { background: #1a1a2e; }
+    .students-table tr:hover td { background: var(--surface); }
 
     .st-avatar-cell { width: 42px; padding-right: 0; }
     .st-avatar-img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; display: block; }
-    .st-name { font-size: 14px; font-weight: 600; color: #e2e2f0; }
-    .st-date { font-size: 12px; color: #555; }
+    .st-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .st-date { font-size: 12px; color: var(--muted); }
     .st-you { font-size: 10px; color: #7c6cff; font-weight: 600; margin-left: 6px; }
 
     .user-badge { cursor: pointer; }
-    .user-badge:hover { background: #2a2a45; color: #ccc; }
+    .user-badge:hover { background: var(--border); color: var(--text-soft); }
   </style>
 </head>
 <body>
 
 <!-- ─── LOGIN SCREEN ─── -->
 <div id="login-screen">
+  <button class="btn-theme" id="theme-toggle-login" onclick="toggleTheme()" title="Toggle light/dark mode" aria-label="Toggle theme">🌙</button>
   <div class="login-card">
     <div class="login-logo">SkillUp Chat</div>
     <div class="login-sub">Enter your name and password to continue</div>
@@ -698,6 +727,7 @@
       <button class="nav-tab" id="tab-students" onclick="showPage('students')">👥 Students</button>
     </div>
     <div class="header-right">
+      <button class="btn-theme" onclick="toggleTheme()" title="Toggle light/dark mode" aria-label="Toggle theme">🌙</button>
       <span class="user-badge" id="user-label"></span>
       <button class="btn-logout" onclick="logout()">Sign out</button>
     </div>
@@ -801,6 +831,19 @@ let pollTimer   = null;
 let isFetching  = false;
 let pendingPhoto = null;
 let pendingFile  = null;
+
+// ─── THEME ────────────────────────────────
+function applyTheme(t) {
+  if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+  else document.documentElement.removeAttribute('data-theme');
+  document.querySelectorAll('.btn-theme').forEach(b => { b.textContent = t === 'light' ? '☀️' : '🌙'; });
+}
+function toggleTheme() {
+  const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  localStorage.setItem('su_theme', next);
+  applyTheme(next);
+}
+applyTheme(localStorage.getItem('su_theme') === 'light' ? 'light' : 'dark');
 
 // ─── AUTH ─────────────────────────────────
 
