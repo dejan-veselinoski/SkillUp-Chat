@@ -103,6 +103,7 @@ async function initDb() {
   persist();
   // Add file_name column if upgrading from an older schema
   try { _db.exec('ALTER TABLE messages ADD COLUMN file_name TEXT'); persist(); } catch(e) {}
+  try { _db.exec('ALTER TABLE users ADD COLUMN avatar_url TEXT'); persist(); } catch(e) {}
   console.log('Database ready.');
 }
 

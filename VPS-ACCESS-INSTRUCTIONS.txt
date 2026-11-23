@@ -1,0 +1,88 @@
+─── SERVER DETAILS ───────────────────────────────────────────
+IP Address : 37.60.249.140
+Username   : root
+Password   : 
+
+─── CONNECTING VIA SSH ────────────────────────────────────────
+From a terminal (Mac/Linux/Windows Git Bash):
+
+  ssh root@37.60.249.140
+
+Enter the password when prompted.
+
+On Windows (PowerShell / CMD) you can also use:
+
+  ssh root@37.60.249.140
+
+
+─── WHAT'S ALREADY ON THE SERVER ─────────────────────────────
+- Node.js v22
+- npm
+- PM2 (process manager — keeps apps running after logout/reboot)
+- UFW firewall
+
+Ports already in use — pick a different one for your app:
+  3000, 3001, 4000  
+Suggested free ports: 3002, 5000, 5001, 8080, 8081
+
+
+─── DEPLOYING YOUR APP WITH CLAUDE CODE ──────────────────────
+Claude Code can automate the whole deployment for you.
+Give it this prompt (adjust the details to match your app):
+
+  "Deploy my Node.js app to a VPS.
+   VPS IP: 37.60.249.140, user: root, password: A32,S^Meo+?N
+   App folder: <path to your local project>
+   Use port 5000.
+   Use PM2 to keep it running and open the port in UFW."
+
+Claude Code will:
+  1. Connect via SSH (using Python paramiko)
+  2. Upload your project files
+  3. Run npm install on the server
+  4. Create a .env file with your PORT
+  5. Start the app with PM2
+  6. Open the firewall port
+  7. Verify the app is reachable
+
+After deployment your app will be live at:
+  http://37.60.249.140:<your-port>
+
+
+─── MANUAL DEPLOYMENT (without Claude Code) ──────────────────
+If you prefer to do it yourself:
+
+1. Copy your files to the server:
+   scp -r ./my-app root@37.60.249.140:/opt/my-app
+
+2. SSH in and set up:
+   ssh root@37.60.249.140
+   cd /opt/my-app
+   npm install
+   echo "PORT=5000" > .env
+
+3. Start with PM2:
+   pm2 start server.js --name my-app
+   pm2 save
+   pm2 startup   (run the printed command to auto-start on reboot)
+
+4. Open the firewall port:
+   ufw allow 5000
+
+5. Test it:
+   curl http://localhost:5000/health
+
+
+─── USEFUL PM2 COMMANDS ──────────────────────────────────────
+  pm2 list                  — see all running apps
+  pm2 logs my-app           — view app logs
+  pm2 restart my-app        — restart after a code change
+  pm2 stop my-app           — stop the app
+  pm2 delete my-app         — remove from PM2
+
+
+─── NOTES ────────────────────────────────────────────────────
+- The server has ~321 GB free disk and ~3.9 GB free RAM, so
+  there is plenty of space for more apps.
+- Keep this file private — it contains the root password.
+- If you need a domain, Dejan can point a subdomain to this IP.

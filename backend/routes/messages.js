@@ -51,7 +51,7 @@ function formatMessage(row, reactions = []) {
     photo_url:  row.photo_url,
     file_name:  row.file_name || null,
     created_at: row.created_at,
-    user:       { id: row.user_id, full_name: row.full_name },
+    user:       { id: row.user_id, full_name: row.full_name, avatar_url: row.avatar_url || null },
     reactions
   };
 }
@@ -78,18 +78,6 @@ function attachReactions(messages) {
   return messages.map(m => ({ ...m, reactions: byMsg[m.id] || [] }));
 }
 
-function fetchMessageRows(whereSql = '', params = []) {
-  return db.all(
-    `SELECT m.id, m.content, m.type, m.photo_url, m.file_name, m.created_at,
-            u.id AS user_id, u.full_name
-     FROM messages m
-     JOIN users u ON m.user_id = u.id
-     ${whereSql}
-     ORDER BY m.created_at ASC`,
-    params
-  );
-}
-
 // GET /messages
 router.get('/', auth, (req, res) => {
   const { since, limit = 100 } = req.query;
@@ -98,7 +86,7 @@ router.get('/', auth, (req, res) => {
   if (since) {
     rows = db.all(
       `SELECT m.id, m.content, m.type, m.photo_url, m.file_name, m.created_at,
-              u.id AS user_id, u.full_name
+              u.id AS user_id, u.full_name, u.avatar_url
        FROM messages m JOIN users u ON m.user_id = u.id
        WHERE m.id > ?
        ORDER BY m.created_at ASC LIMIT ?`,
@@ -107,7 +95,7 @@ router.get('/', auth, (req, res) => {
   } else {
     rows = db.all(
       `SELECT m.id, m.content, m.type, m.photo_url, m.file_name, m.created_at,
-              u.id AS user_id, u.full_name
+              u.id AS user_id, u.full_name, u.avatar_url
        FROM messages m JOIN users u ON m.user_id = u.id
        ORDER BY m.created_at ASC LIMIT ?`,
       [parseInt(limit, 10)]
@@ -132,7 +120,7 @@ router.post('/', auth, (req, res) => {
 
   const row = db.get(
     `SELECT m.id, m.content, m.type, m.photo_url, m.file_name, m.created_at,
-            u.id AS user_id, u.full_name
+            u.id AS user_id, u.full_name, u.avatar_url
      FROM messages m JOIN users u ON m.user_id = u.id WHERE m.id = ?`,
     [lastInsertRowid]
   );
@@ -154,7 +142,7 @@ router.post('/photo', auth, upload.single('photo'), (req, res) => {
 
   const row = db.get(
     `SELECT m.id, m.content, m.type, m.photo_url, m.file_name, m.created_at,
-            u.id AS user_id, u.full_name
+            u.id AS user_id, u.full_name, u.avatar_url
      FROM messages m JOIN users u ON m.user_id = u.id WHERE m.id = ?`,
     [lastInsertRowid]
   );
@@ -177,12 +165,26 @@ router.post('/file', auth, docUpload.single('file'), (req, res) => {
 
   const row = db.get(
     `SELECT m.id, m.content, m.type, m.photo_url, m.file_name, m.created_at,
-            u.id AS user_id, u.full_name
+            u.id AS user_id, u.full_name, u.avatar_url
      FROM messages m JOIN users u ON m.user_id = u.id WHERE m.id = ?`,
     [lastInsertRowid]
   );
 
   res.status(201).json(formatMessage(row, []));
+});
+
+// DELETE /messages/:id — delete a message (author only)
+router.delete('/:id', auth, (req, res) => {
+  const messageId = parseInt(req.params.id, 10);
+
+  const message = db.get('SELECT id, user_id FROM messages WHERE id = ?', [messageId]);
+  if (!message) return res.status(404).json({ error: 'Message not found' });
+  if (message.user_id !== req.user.id) return res.status(403).json({ error: 'You can only delete your own messages' });
+
+  db.run('DELETE FROM reactions WHERE message_id = ?', [messageId]);
+  db.run('DELETE FROM messages WHERE id = ?', [messageId]);
+
+  res.json({ message: 'Message deleted', id: messageId });
 });
 
 // POST /messages/:id/react — toggle emoji reaction

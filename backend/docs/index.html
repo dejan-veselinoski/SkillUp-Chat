@@ -160,6 +160,8 @@ body {
 }
 .m-get  { background: var(--get-bg);  color: var(--get); }
 .m-post { background: var(--post-bg); color: var(--post); }
+.m-put  { background: rgba(245,158,11,.12); color: #f59e0b; }
+.m-del  { background: rgba(239,68,68,.12);  color: #ef4444; }
 
 /* ── Main content ───────────────────────────────── */
 .content {
@@ -285,6 +287,8 @@ body {
 }
 .ep-get  { background: var(--get-bg);  color: var(--get); }
 .ep-post { background: var(--post-bg); color: var(--post); }
+.ep-put  { background: rgba(245,158,11,.12); color: #f59e0b; }
+.ep-del  { background: rgba(239,68,68,.12);  color: #ef4444; }
 
 .ep-path {
   font-family: 'JetBrains Mono', monospace;
@@ -340,6 +344,7 @@ code.type {
 
 .s400 { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:500; padding:3px 7px; border-radius:5px; background:rgba(245,158,11,.1); color:#f59e0b; }
 .s401 { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:500; padding:3px 7px; border-radius:5px; background:rgba(239,68,68,.1);  color:#ef4444; }
+.s403 { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:500; padding:3px 7px; border-radius:5px; background:rgba(239,68,68,.1);  color:#ef4444; }
 .s404 { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:500; padding:3px 7px; border-radius:5px; background:rgba(239,68,68,.1);  color:#ef4444; }
 .s409 { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:500; padding:3px 7px; border-radius:5px; background:rgba(249,115,22,.1); color:#f97316; }
 
@@ -506,6 +511,25 @@ code.type {
     <a class="nav-link" href="#messages-post"><span class="m-badge m-post">POST</span> /messages</a>
     <a class="nav-link" href="#messages-photo"><span class="m-badge m-post">POST</span> /messages/photo</a>
     <a class="nav-link" href="#messages-react"><span class="m-badge m-post">POST</span> /messages/:id/react</a>
+    <a class="nav-link" href="#messages-file"><span class="m-badge m-post">POST</span> /messages/file</a>
+    <a class="nav-link" href="#messages-delete"><span class="m-badge m-del">DEL</span> /messages/:id</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Profile</div>
+    <a class="nav-link" href="#profile-get"><span class="m-badge m-get">GET</span> /auth/me</a>
+    <a class="nav-link" href="#profile-update"><span class="m-badge m-put">PUT</span> /auth/me</a>
+    <a class="nav-link" href="#profile-password"><span class="m-badge m-put">PUT</span> /auth/me/password</a>
+    <a class="nav-link" href="#profile-avatar"><span class="m-badge m-post">POST</span> /auth/me/avatar</a>
+    <a class="nav-link" href="#users-list"><span class="m-badge m-get">GET</span> /auth/users</a>
+    <a class="nav-link" href="#users-get"><span class="m-badge m-get">GET</span> /auth/users/:id</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Documents</div>
+    <a class="nav-link" href="#documents-get"><span class="m-badge m-get">GET</span> /documents</a>
+    <a class="nav-link" href="#documents-upload"><span class="m-badge m-post">POST</span> /documents/upload</a>
+    <a class="nav-link" href="#documents-delete"><span class="m-badge m-del">DEL</span> /documents/:id</a>
   </div>
 
   <div class="nav-group">
@@ -884,6 +908,351 @@ fetch('http://37.60.249.140:3001/messages/photo', {
     </div>
   </section>
 
+  <!-- ── POST /messages/file ── -->
+  <section class="section" id="messages-file">
+    <div class="eyebrow">Messages</div>
+    <h2>POST /messages/file</h2>
+    <p>Send a file attachment in the chat (PDF, Word .doc/.docx, plain text). Use <code class="param">multipart/form-data</code>. Max 25 MB.</p>
+    <div class="endpoint-pill">
+      <span class="ep-method ep-post">POST</span>
+      <span class="ep-path">/messages/file</span>
+    </div>
+    <h3>Form fields — multipart/form-data</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code class="param">file</code></td><td><code class="type">file</code></td><td><span class="req">required</span></td><td>PDF, .doc, .docx or .txt. Max 25 MB.</td></tr>
+          <tr><td><code class="param">caption</code></td><td><code class="type">string</code></td><td><span class="opt">optional</span></td><td>Text caption for the file</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Response 201 — the created message</h3>
+    <div class="code-wrap">
+      <div class="code-box">
+        <pre id="c-file-res"></pre>
+        <button class="copy-btn">Copy</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── DELETE /messages/:id ── -->
+  <section class="section" id="messages-delete">
+    <div class="eyebrow">Messages</div>
+    <h2>DELETE /messages/:id</h2>
+    <p>Permanently delete a message. Only the author of the message can delete it. Reactions attached to the message are also removed.</p>
+
+    <div class="endpoint-pill">
+      <span class="ep-method ep-del">DELETE</span>
+      <span class="ep-path">/messages/<span class="path-param">:id</span></span>
+    </div>
+
+    <h3>URL parameter</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code class="param">:id</code></td><td><code class="type">integer</code></td><td>The ID of the message to delete</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Response 200</h3>
+    <div class="code-wrap">
+      <div class="code-box">
+        <pre id="c-msg-del"></pre>
+        <button class="copy-btn">Copy</button>
+      </div>
+    </div>
+
+    <h3>Error responses</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Status</th><th>error message</th><th>Cause</th></tr></thead>
+        <tbody>
+          <tr><td><span class="s404">404</span></td><td><code class="type">Message not found</code></td><td>Invalid message ID</td></tr>
+          <tr><td><span class="s403">403</span></td><td><code class="type">You can only delete your own messages</code></td><td>Message belongs to another user</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── GET /auth/me ── -->
+  <section class="section" id="profile-get">
+    <div class="eyebrow">Profile</div>
+    <h2>GET /auth/me</h2>
+    <p>Get the current authenticated user's profile including their avatar URL.</p>
+    <div class="endpoint-pill">
+      <span class="ep-method ep-get">GET</span>
+      <span class="ep-path">/auth/me</span>
+    </div>
+    <h3>Response 200</h3>
+    <div class="code-wrap">
+      <div class="code-box">
+        <pre id="c-me-get"></pre>
+        <button class="copy-btn">Copy</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PUT /auth/me ── -->
+  <section class="section" id="profile-update">
+    <div class="eyebrow">Profile</div>
+    <h2>PUT /auth/me</h2>
+    <p>Update the current user's full name. Returns a fresh JWT token — replace your stored token with the new one.</p>
+    <div class="endpoint-pill">
+      <span class="ep-method ep-put">PUT</span>
+      <span class="ep-path">/auth/me</span>
+    </div>
+    <h3>Request body — application/json</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code class="param">full_name</code></td><td><code class="type">string</code></td><td><span class="req">required</span></td><td>New full name. Must be unique.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Response 200</h3>
+    <div class="code-wrap">
+      <div class="code-box">
+        <pre id="c-me-put"></pre>
+        <button class="copy-btn">Copy</button>
+      </div>
+    </div>
+    <h3>Error responses</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Status</th><th>error message</th><th>Cause</th></tr></thead>
+        <tbody>
+          <tr><td><span class="s400">400</span></td><td><code class="type">full_name is required</code></td><td>Missing field</td></tr>
+          <tr><td><span class="s409">409</span></td><td><code class="type">A user with this name already exists</code></td><td>Name already taken</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── PUT /auth/me/password ── -->
+  <section class="section" id="profile-password">
+    <div class="eyebrow">Profile</div>
+    <h2>PUT /auth/me/password</h2>
+    <p>Change the current user's password. The existing password must be provided for verification.</p>
+    <div class="endpoint-pill">
+      <span class="ep-method ep-put">PUT</span>
+      <span class="ep-path">/auth/me/password</span>
+    </div>
+    <h3>Request body — application/json</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code class="param">current_password</code></td><td><code class="type">string</code></td><td><span class="req">required</span></td><td>The user's current password</td></tr>
+          <tr><td><code class="param">new_password</code></td><td><code class="type">string</code></td><td><span class="req">required</span></td><td>The new password to set</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Response 200</h3>
+    <div class="code-wrap">
+      <div class="code-box">
+        <pre id="c-me-pass"></pre>
+        <button class="copy-btn">Copy</button>
+      </div>
+    </div>
+    <h3>Error responses</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Status</th><th>error message</th><th>Cause</th></tr></thead>
+        <tbody>
+          <tr><td><span class="s400">400</span></td><td><code class="type">current_password and new_password are required</code></td><td>Missing field</td></tr>
+          <tr><td><span class="s401">401</span></td><td><code class="type">Current password is incorrect</code></td><td>Wrong current password</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── POST /auth/me/avatar ── -->
+  <section class="section" id="profile-avatar">
+    <div class="eyebrow">Profile</div>
+    <h2>POST /auth/me/avatar</h2>
+    <p>Upload an avatar image for the current user. Use <code class="param">multipart/form-data</code>. Max 5 MB, images only. The returned <code class="param">avatar_url</code> is relative — prepend the base URL to display it.</p>
+    <div class="endpoint-pill">
+      <span class="ep-method ep-post">POST</span>
+      <span class="ep-path">/auth/me/avatar</span>
+    </div>
+    <h3>Form fields — multipart/form-data</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code class="param">avatar</code></td><td><code class="type">file</code></td><td><span class="req">required</span></td><td>Image file (jpg, png, webp…). Max 5 MB.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Response 200</h3>
+    <div class="code-wrap">
+      <div class="code-box">
+        <pre id="c-me-avatar"></pre>
+        <button class="copy-btn">Copy</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── GET /auth/users ── -->
+  <section class="section" id="users-list">
+    <div class="eyebrow">Profile</div>
+    <h2>GET /auth/users</h2>
+    <p>List all registered users sorted by registration date. Useful for a class roster or student directory.</p>
+    <div class="endpoint-pill">
+      <span class="ep-method ep-get">GET</span>
+      <span class="ep-path">/auth/users</span>
+    </div>
+    <h3>Response 200</h3>
+    <div class="code-wrap">
+      <div class="code-box">
+        <pre id="c-users"></pre>
+        <button class="copy-btn">Copy</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── GET /auth/users/:id ── -->
+  <section class="section" id="users-get">
+    <div class="eyebrow">Profile</div>
+    <h2>GET /auth/users/:id</h2>
+    <p>Get a single user's public profile by their ID. Useful for showing profile details when clicking on a user's avatar in the chat.</p>
+
+    <div class="endpoint-pill">
+      <span class="ep-method ep-get">GET</span>
+      <span class="ep-path">/auth/users/<span class="path-param">:id</span></span>
+    </div>
+
+    <h3>URL parameter</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code class="param">:id</code></td><td><code class="type">integer</code></td><td>The ID of the user to look up</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Response 200</h3>
+    <div class="code-wrap">
+      <div class="code-box">
+        <pre id="c-user-get"></pre>
+        <button class="copy-btn">Copy</button>
+      </div>
+    </div>
+
+    <h3>Error responses</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Status</th><th>error message</th><th>Cause</th></tr></thead>
+        <tbody>
+          <tr><td><span class="s404">404</span></td><td><code class="type">User not found</code></td><td>Invalid user ID</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── GET /documents ── -->
+  <section class="section" id="documents-get">
+    <div class="eyebrow">Documents</div>
+    <h2>GET /documents</h2>
+    <p>List all documents in the shared archive, most recently uploaded first.</p>
+    <div class="endpoint-pill">
+      <span class="ep-method ep-get">GET</span>
+      <span class="ep-path">/documents</span>
+    </div>
+    <h3>Response 200</h3>
+    <div class="code-wrap">
+      <div class="code-box">
+        <pre id="c-docs-get"></pre>
+        <button class="copy-btn">Copy</button>
+      </div>
+    </div>
+    <h3>Document object fields</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code class="param">id</code></td><td><code class="type">integer</code></td><td>Unique document ID</td></tr>
+          <tr><td><code class="param">original_name</code></td><td><code class="type">string</code></td><td>Original filename as uploaded</td></tr>
+          <tr><td><code class="param">file_url</code></td><td><code class="type">string</code></td><td>Relative path — prepend base URL to download</td></tr>
+          <tr><td><code class="param">file_size</code></td><td><code class="type">integer | null</code></td><td>File size in bytes</td></tr>
+          <tr><td><code class="param">mime_type</code></td><td><code class="type">string | null</code></td><td>MIME type of the file</td></tr>
+          <tr><td><code class="param">description</code></td><td><code class="type">string | null</code></td><td>Optional description</td></tr>
+          <tr><td><code class="param">uploader</code></td><td><code class="type">object</code></td><td><code class="type">{ id, full_name }</code> — who uploaded it</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── POST /documents/upload ── -->
+  <section class="section" id="documents-upload">
+    <div class="eyebrow">Documents</div>
+    <h2>POST /documents/upload</h2>
+    <p>Upload a document to the shared archive. Any file type is accepted. Max 100 MB.</p>
+    <div class="endpoint-pill">
+      <span class="ep-method ep-post">POST</span>
+      <span class="ep-path">/documents/upload</span>
+    </div>
+    <h3>Form fields — multipart/form-data</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code class="param">file</code></td><td><code class="type">file</code></td><td><span class="req">required</span></td><td>Any file type. Max 100 MB.</td></tr>
+          <tr><td><code class="param">description</code></td><td><code class="type">string</code></td><td><span class="opt">optional</span></td><td>Brief description of the document (max 200 chars)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Response 201</h3>
+    <div class="code-wrap">
+      <div class="code-box">
+        <pre id="c-docs-upload"></pre>
+        <button class="copy-btn">Copy</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── DELETE /documents/:id ── -->
+  <section class="section" id="documents-delete">
+    <div class="eyebrow">Documents</div>
+    <h2>DELETE /documents/:id</h2>
+    <p>Permanently delete a document from the archive. Only the original uploader can delete their own files.</p>
+    <div class="endpoint-pill">
+      <span class="ep-method ep-del">DELETE</span>
+      <span class="ep-path">/documents/<span class="path-param">:id</span></span>
+    </div>
+    <h3>URL parameter</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code class="param">:id</code></td><td><code class="type">integer</code></td><td>The document ID to delete</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Response 200</h3>
+    <div class="code-wrap">
+      <div class="code-box">
+        <pre id="c-docs-del"></pre>
+        <button class="copy-btn">Copy</button>
+      </div>
+    </div>
+    <h3>Error responses</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Status</th><th>error message</th><th>Cause</th></tr></thead>
+        <tbody>
+          <tr><td><span class="s404">404</span></td><td><code class="type">Document not found</code></td><td>Invalid ID</td></tr>
+          <tr><td><span class="s401">401</span></td><td><code class="type">Not authorized to delete this document</code></td><td>Not the uploader</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
   <!-- ── Polling ── -->
   <section class="section" id="polling">
     <div class="eyebrow">Guide</div>
@@ -994,11 +1363,24 @@ const CODE = {
   'c-react-res':  '{\n  "action": "added",\n  "emoji": "👍",\n  "message_id": 3\n}',
   'c-poll':       `const API = 'http://37.60.249.140:3001';\nlet token = localStorage.getItem('token');\n\nasync function fetchMessages() {\n  const res = await fetch(API + '/messages', {\n    headers: { Authorization: 'Bearer ' + token }\n  });\n  if (res.status === 401) return logout();\n  const { messages } = await res.json();\n  renderMessages(messages); // update your UI\n}\n\n// Initial load, then every 2.5 seconds\nfetchMessages();\nsetInterval(fetchMessages, 2500);`,
   'c-photo-url':  `// msg.photo_url = '/uploads/1700000000001-abc.jpg'\nconst src = 'http://37.60.249.140:3001' + msg.photo_url;\n\n// In HTML:\n// <img src="http://37.60.249.140:3001/uploads/1700000000001-abc.jpg">`,
-  'c-error':      '{\n  "error": "Human-readable description of what went wrong"\n}'
+  'c-error':      '{\n  "error": "Human-readable description of what went wrong"\n}',
+  'c-file-res':   '{\n  "id": 5,\n  "content": "Assignment brief",\n  "type": "file",\n  "photo_url": "/uploads/1700000000003-def.pdf",\n  "file_name": "assignment.pdf",\n  "created_at": "2026-11-16T10:05:00",\n  "user": { "id": 1, "full_name": "John Doe", "avatar_url": null },\n  "reactions": []\n}',
+  'c-me-get':     '{\n  "user": {\n    "id": 1,\n    "full_name": "John Doe",\n    "avatar_url": "/uploads/avatar-1-1700000000.jpg",\n    "created_at": "2026-11-16T09:00:00"\n  }\n}',
+  'c-me-put':     '{\n  "token": "eyJhbGciOiJIUzI1NiJ9...",\n  "user": {\n    "id": 1,\n    "full_name": "John Smith",\n    "avatar_url": "/uploads/avatar-1-1700000000.jpg"\n  }\n}',
+  'c-me-pass':    '{\n  "message": "Password updated successfully"\n}',
+  'c-me-avatar':  '{\n  "user": {\n    "id": 1,\n    "full_name": "John Doe",\n    "avatar_url": "/uploads/avatar-1-1700000001.jpg"\n  }\n}',
+  'c-users':      '{\n  "users": [\n    {\n      "id": 1,\n      "full_name": "John Doe",\n      "avatar_url": "/uploads/avatar-1-1700000000.jpg",\n      "created_at": "2026-11-16T09:00:00"\n    },\n    {\n      "id": 2,\n      "full_name": "Jane Smith",\n      "avatar_url": null,\n      "created_at": "2026-11-16T09:30:00"\n    }\n  ]\n}',
+  'c-user-get':   '{\n  "user": {\n    "id": 1,\n    "full_name": "John Doe",\n    "avatar_url": "/uploads/avatar-1-1700000000.jpg",\n    "created_at": "2026-11-16T09:00:00"\n  }\n}',
+  'c-msg-del':    '{\n  "message": "Message deleted",\n  "id": 7\n}',
+  'c-docs-get':   '{\n  "documents": [\n    {\n      "id": 1,\n      "original_name": "lecture-notes.pdf",\n      "file_url": "/uploads/1700000000001-abc.pdf",\n      "file_size": 204800,\n      "mime_type": "application/pdf",\n      "description": "Week 3 lecture notes",\n      "created_at": "2026-11-16T10:00:00",\n      "uploader": { "id": 1, "full_name": "John Doe" }\n    }\n  ]\n}',
+  'c-docs-upload':'{\n  "document": {\n    "id": 2,\n    "original_name": "slides.pptx",\n    "file_url": "/uploads/1700000000002-xyz.pptx",\n    "file_size": 512000,\n    "description": "Class slides",\n    "created_at": "2026-11-16T11:00:00",\n    "uploader": { "id": 1, "full_name": "John Doe" }\n  }\n}',
+  'c-docs-del':   '{\n  "message": "Document deleted"\n}'
 };
 
 const JSON_BLOCKS = new Set(['c-health','c-reg-req','c-reg-res','c-login-req','c-login-res',
-  'c-msgs-res','c-send-req','c-send-res','c-photo-res','c-react-req','c-react-res','c-error']);
+  'c-msgs-res','c-send-req','c-send-res','c-photo-res','c-react-req','c-react-res','c-error',
+  'c-file-res','c-me-get','c-me-put','c-me-pass','c-me-avatar','c-users',
+  'c-docs-get','c-docs-upload','c-docs-del','c-msg-del','c-user-get']);
 
 Object.entries(CODE).forEach(([id, text]) => {
   const el = document.getElementById(id);

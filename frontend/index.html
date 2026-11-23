@@ -613,6 +613,62 @@
     }
     .doc-action-btn:hover { border-color: #7c6cff; color: #7c6cff; }
     .doc-del-btn:hover { border-color: #ff6b6b !important; color: #ff6b6b !important; }
+
+    /* ─── STUDENTS PAGE ─── */
+    #students-page {
+      flex: 1;
+      overflow-y: auto;
+      display: none;
+      flex-direction: column;
+    }
+
+    .students-page-inner {
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .students-page-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .students-table-wrap { overflow-x: auto; }
+
+    .students-table { width: 100%; border-collapse: collapse; }
+
+    .students-table th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 8px 12px;
+      border-bottom: 1px solid #2a2a45;
+    }
+
+    .students-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #1f1f35;
+      vertical-align: middle;
+    }
+
+    .students-table tr:last-child td { border-bottom: none; }
+    .students-table tr:hover td { background: #1a1a2e; }
+
+    .st-avatar-cell { width: 42px; padding-right: 0; }
+    .st-avatar-img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; display: block; }
+    .st-name { font-size: 14px; font-weight: 600; color: #e2e2f0; }
+    .st-date { font-size: 12px; color: #555; }
+    .st-you { font-size: 10px; color: #7c6cff; font-weight: 600; margin-left: 6px; }
+
+    .user-badge { cursor: pointer; }
+    .user-badge:hover { background: #2a2a45; color: #ccc; }
   </style>
 </head>
 <body>
@@ -639,6 +695,7 @@
     <div class="nav-tabs">
       <button class="nav-tab active" id="tab-chat" onclick="showPage('chat')">💬 Chat</button>
       <button class="nav-tab" id="tab-docs" onclick="showPage('documents')">📁 Documents</button>
+      <button class="nav-tab" id="tab-students" onclick="showPage('students')">👥 Students</button>
     </div>
     <div class="header-right">
       <span class="user-badge" id="user-label"></span>
@@ -707,6 +764,25 @@
 
     <div class="doc-section-title">Archived Documents</div>
     <div class="doc-list" id="doc-list"></div>
+  </div>
+
+  <!-- ─── STUDENTS PAGE ─── -->
+  <div id="students-page">
+    <div class="students-page-inner">
+      <div class="students-page-title">Class Members</div>
+      <div class="students-table-wrap">
+        <table class="students-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Name</th>
+              <th>Joined</th>
+            </tr>
+          </thead>
+          <tbody id="students-tbody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -859,7 +935,9 @@ function renderMessage(msg) {
     content = esc(msg.content || '');
   }
 
-  const avatarHtml = `<div class="avatar">${initials}</div>`;
+  const avatarHtml = msg.user.avatar_url
+    ? `<img class="avatar" src="${API_URL + msg.user.avatar_url}" alt="${initials}" style="object-fit:cover">`
+    : `<div class="avatar">${initials}</div>`;
   const metaHtml   = `<div class="msg-meta">${own ? '' : msg.user.full_name + ' · '}${time}</div>`;
 
   return `
@@ -1056,9 +1134,12 @@ function setStatus(msg, isError = false) {
 function showPage(page) {
   document.getElementById('tab-chat').classList.toggle('active', page === 'chat');
   document.getElementById('tab-docs').classList.toggle('active', page === 'documents');
+  document.getElementById('tab-students').classList.toggle('active', page === 'students');
   document.getElementById('chat-page').style.display      = page === 'chat'      ? 'flex' : 'none';
   document.getElementById('documents-page').style.display = page === 'documents' ? 'flex' : 'none';
+  document.getElementById('students-page').style.display  = page === 'students'  ? 'flex' : 'none';
   if (page === 'documents') fetchDocuments();
+  if (page === 'students')  fetchStudents();
 }
 
 // ─── DOCUMENTS ────────────────────────────
@@ -1240,8 +1321,41 @@ function setDocStatus(msg, type = '') {
   el.className = 'doc-status' + (type ? ' ' + type : '');
 }
 
+// ─── STUDENTS PAGE ────────────────────────────
+
+function fetchStudents() {
+  const dummyUsers = [
+    { id: 1, full_name: 'Alice Johnson',   avatar_url: null, created_at: '2025-01-10T09:00:00Z' },
+    { id: 2, full_name: 'Bob Smith',        avatar_url: null, created_at: '2025-01-11T10:30:00Z' },
+    { id: 3, full_name: 'Carol Williams',   avatar_url: null, created_at: '2025-01-12T08:15:00Z' },
+    { id: 4, full_name: 'David Brown',      avatar_url: null, created_at: '2025-01-13T14:00:00Z' },
+    { id: 5, full_name: 'Eva Martinez',     avatar_url: null, created_at: '2025-01-14T11:45:00Z' },
+  ];
+  renderStudents(dummyUsers);
+}
+
+function renderStudents(users) {
+  const tbody = document.getElementById('students-tbody');
+  tbody.innerHTML = users.map(u => {
+    const initials = u.full_name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    const avatarHtml = u.avatar_url
+      ? `<img src="${API_URL + u.avatar_url}" class="st-avatar-img" alt="${initials}">`
+      : `<div class="avatar" style="width:34px;height:34px;font-size:12px;flex-shrink:0">${initials}</div>`;
+    const isMe = u.id === currentUser.id ? ' <span class="st-you">you</span>' : '';
+    const date = new Date(u.created_at).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' });
+    return `<tr>
+      <td class="st-avatar-cell">${avatarHtml}</td>
+      <td class="st-name">${esc(u.full_name)}${isMe}</td>
+      <td class="st-date">${date}</td>
+    </tr>`;
+  }).join('');
+}
+
 // ─── INIT ─────────────────────────────────
 if (token && currentUser) openChat();
+
 </script>
+
+
 </body>
 </html>
