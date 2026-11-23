@@ -85,6 +85,19 @@ async function initDb() {
       FOREIGN KEY (message_id) REFERENCES messages(id),
       FOREIGN KEY (user_id)    REFERENCES users(id)
     );
+
+    CREATE TABLE IF NOT EXISTS documents (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id       INTEGER NOT NULL,
+      original_name TEXT NOT NULL,
+      stored_name   TEXT NOT NULL,
+      file_url      TEXT NOT NULL,
+      file_size     INTEGER,
+      mime_type     TEXT,
+      description   TEXT,
+      created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
   `);
 
   persist();

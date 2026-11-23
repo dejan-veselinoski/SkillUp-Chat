@@ -5,8 +5,9 @@ const path    = require('path');
 const fs      = require('fs');
 const { initDb } = require('./db');
 
-const authRoutes    = require('./routes/auth');
-const messageRoutes = require('./routes/messages');
+const authRoutes     = require('./routes/auth');
+const messageRoutes  = require('./routes/messages');
+const documentRoutes = require('./routes/documents');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -19,8 +20,9 @@ app.use(express.json());
 app.use('/uploads', express.static(uploadsDir));
 app.use('/docs', express.static(path.join(__dirname, 'docs')));
 
-app.use('/auth',     authRoutes);
-app.use('/messages', messageRoutes);
+app.use('/auth',      authRoutes);
+app.use('/messages',  messageRoutes);
+app.use('/documents', documentRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
