@@ -1,0 +1,1063 @@
+<title>SkillUp Chat API</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+/* ── Tokens ─────────────────────────────────────── */
+/* Layout: sticky 260px sidebar + scrollable content */
+:root {
+  --sidebar-w: 260px;
+
+  --bg:       #f5f5fc;
+  --surface:  #ffffff;
+  --surface2: #ebebf8;
+  --border:   #dedaf0;
+  --text:     #1b1829;
+  --muted:    #6e6b8e;
+  --accent:   #6c5ce7;
+  --accent-bg:rgba(108,92,231,.1);
+
+  --get:      #059669;
+  --get-bg:   rgba(5,150,105,.1);
+  --post:     #6c5ce7;
+  --post-bg:  rgba(108,92,231,.1);
+
+  --code-bg:  #1e1b3a;
+  --code-fg:  #c9ccf0;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:       #0e0e1c;
+    --surface:  #18182e;
+    --surface2: #22223a;
+    --border:   #2e2e4e;
+    --text:     #e2e2f0;
+    --muted:    #7878a0;
+    --accent:   #8b7cff;
+    --accent-bg:rgba(139,124,255,.12);
+    --get:      #34d399;
+    --get-bg:   rgba(52,211,153,.1);
+    --post:     #8b7cff;
+    --post-bg:  rgba(139,124,255,.12);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg:       #0e0e1c;
+  --surface:  #18182e;
+  --surface2: #22223a;
+  --border:   #2e2e4e;
+  --text:     #e2e2f0;
+  --muted:    #7878a0;
+  --accent:   #8b7cff;
+  --accent-bg:rgba(139,124,255,.12);
+  --get:      #34d399;
+  --get-bg:   rgba(52,211,153,.1);
+  --post:     #8b7cff;
+  --post-bg:  rgba(139,124,255,.12);
+  color-scheme: dark;
+}
+
+/* ── Reset ──────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.65;
+  font-size: 15px;
+  padding-left:  max(0px, env(safe-area-inset-left, 0px));
+  padding-right: max(0px, env(safe-area-inset-right, 0px));
+}
+
+/* ── Page layout ────────────────────────────────── */
+.layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  min-height: 100vh;
+  align-items: start;
+}
+
+/* ── Sidebar ────────────────────────────────────── */
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0 0 32px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.sidebar-brand {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-brand-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text);
+}
+.sidebar-brand-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.base-url-box {
+  margin: 12px 14px 0;
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+.nav-group { margin-top: 20px; }
+
+.nav-group-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 20px 5px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 20px;
+  text-decoration: none;
+  color: var(--text);
+  font-size: 13px;
+  transition: background .12s;
+}
+.nav-link:hover { background: var(--surface2); }
+.nav-link.active { background: var(--accent-bg); color: var(--accent); font-weight: 500; }
+
+.m-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 500;
+  padding: 2px 5px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.m-get  { background: var(--get-bg);  color: var(--get); }
+.m-post { background: var(--post-bg); color: var(--post); }
+
+/* ── Main content ───────────────────────────────── */
+.content {
+  padding: 48px 56px 80px;
+  max-width: 820px;
+  min-width: 0;
+}
+
+/* ── Sections ───────────────────────────────────── */
+.section { scroll-margin-top: 24px; }
+.section + .section {
+  margin-top: 56px;
+  padding-top: 56px;
+  border-top: 1px solid var(--border);
+}
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.section h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-wrap: balance;
+  margin-bottom: 12px;
+}
+
+.section h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  margin: 28px 0 10px;
+  font-size: 11px;
+}
+
+.section p { margin-bottom: 12px; opacity: .9; }
+.section p:last-child { margin-bottom: 0; }
+
+/* ── Page intro ─────────────────────────────────── */
+.intro {
+  margin-bottom: 56px;
+  padding-bottom: 48px;
+  border-bottom: 1px solid var(--border);
+}
+
+.page-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 14px;
+}
+
+.page-title span {
+  background: linear-gradient(135deg, var(--accent) 0%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.page-desc { color: var(--muted); font-size: 15px; max-width: 500px; }
+
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.meta-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12.5px;
+}
+
+.meta-chip .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--get);
+  box-shadow: 0 0 0 2px var(--get-bg);
+  flex-shrink: 0;
+}
+
+.meta-chip code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--accent);
+}
+
+/* ── Endpoint pill ──────────────────────────────── */
+.endpoint-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 18px 0;
+}
+
+.ep-method {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 9px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+.ep-get  { background: var(--get-bg);  color: var(--get); }
+.ep-post { background: var(--post-bg); color: var(--post); }
+
+.ep-path {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.ep-path .path-param { color: var(--accent); }
+
+/* ── Tables ─────────────────────────────────────── */
+.table-wrap { overflow-x: auto; margin: 12px 0 20px; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  min-width: 480px;
+}
+
+thead th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  line-height: 1.5;
+}
+tbody tr:last-child td { border-bottom: none; }
+
+code.param {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  color: var(--accent);
+}
+
+code.type {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.req { font-size: 10px; background: rgba(239,68,68,.1); color:#ef4444; padding:2px 6px; border-radius:4px; font-weight:500; }
+.opt { font-size: 10px; background: var(--surface2); color:var(--muted); padding:2px 6px; border-radius:4px; font-weight:500; }
+
+.s400 { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:500; padding:3px 7px; border-radius:5px; background:rgba(245,158,11,.1); color:#f59e0b; }
+.s401 { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:500; padding:3px 7px; border-radius:5px; background:rgba(239,68,68,.1);  color:#ef4444; }
+.s404 { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:500; padding:3px 7px; border-radius:5px; background:rgba(239,68,68,.1);  color:#ef4444; }
+.s409 { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:500; padding:3px 7px; border-radius:5px; background:rgba(249,115,22,.1); color:#f97316; }
+
+/* ── Code blocks ────────────────────────────────── */
+.code-wrap { margin: 10px 0 20px; }
+
+.code-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+
+.code-box {
+  background: var(--code-bg);
+  border-radius: 10px;
+  padding: 18px 20px;
+  overflow-x: auto;
+  position: relative;
+}
+
+.code-box pre {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--code-fg);
+  margin: 0;
+  white-space: pre;
+  min-width: 0;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 11px;
+  color: rgba(255,255,255,.4);
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: background .12s, color .12s;
+}
+.copy-btn:hover { background: rgba(255,255,255,.13); color: rgba(255,255,255,.75); }
+.copy-btn.ok { color: #22c55e; }
+
+/* JSON tokens */
+.jk { color: #79b8ff; }   /* key */
+.js { color: #9ece6a; }   /* string value */
+.jn { color: #f7a35c; }   /* number */
+.jb { color: #bb9af7; }   /* bool */
+.jl { color: #7dcfff; }   /* null */
+.jc { color: #565f89; font-style: italic; } /* comment */
+
+/* ── Info / note box ────────────────────────────── */
+.note {
+  background: var(--accent-bg);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  margin: 16px 0;
+  line-height: 1.6;
+}
+.note strong { color: var(--accent); }
+
+/* ── Theme toggle ───────────────────────────────── */
+.theme-btn {
+  position: fixed;
+  top: 14px;
+  right: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--muted);
+  font-family: 'Inter', sans-serif;
+  transition: background .12s;
+  z-index: 200;
+}
+.theme-btn:hover { background: var(--surface2); }
+
+/* ── Responsive ─────────────────────────────────── */
+@media (max-width: 800px) {
+  .layout { grid-template-columns: 1fr; }
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: auto;
+    max-height: 52px;
+    overflow: hidden;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0;
+    z-index: 50;
+  }
+
+  .sidebar-brand, .base-url-box { display: none; }
+
+  .nav-group {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 8px 12px;
+    gap: 2px;
+    margin: 0;
+    scrollbar-width: none;
+  }
+  .nav-group::-webkit-scrollbar { display: none; }
+  .nav-group-label { display: none; }
+  .nav-link { padding: 5px 10px; border-radius: 6px; }
+
+  .content {
+    padding: 28px max(16px, env(safe-area-inset-left,0px)) 60px max(16px, env(safe-area-inset-right,0px));
+  }
+
+  .page-title { font-size: 28px; }
+  .theme-btn { top: 10px; right: 10px; }
+}
+</style>
+
+<button class="theme-btn" id="theme-btn" aria-label="Toggle theme">🌙 Dark</button>
+
+<div class="layout">
+
+<!-- ══ SIDEBAR ══════════════════════════════════════ -->
+<nav class="sidebar" aria-label="API navigation">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-name">SkillUp Chat</div>
+    <div class="sidebar-brand-sub">REST API Reference</div>
+    <div class="base-url-box">http://37.60.249.140:3001</div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">General</div>
+    <a class="nav-link" href="#overview">Overview</a>
+    <a class="nav-link" href="#auth-section">Authentication</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Health</div>
+    <a class="nav-link" href="#health"><span class="m-badge m-get">GET</span> /health</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Auth</div>
+    <a class="nav-link" href="#register"><span class="m-badge m-post">POST</span> /auth/register</a>
+    <a class="nav-link" href="#login"><span class="m-badge m-post">POST</span> /auth/login</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Messages</div>
+    <a class="nav-link" href="#messages-get"><span class="m-badge m-get">GET</span> /messages</a>
+    <a class="nav-link" href="#messages-post"><span class="m-badge m-post">POST</span> /messages</a>
+    <a class="nav-link" href="#messages-photo"><span class="m-badge m-post">POST</span> /messages/photo</a>
+    <a class="nav-link" href="#messages-react"><span class="m-badge m-post">POST</span> /messages/:id/react</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Guides</div>
+    <a class="nav-link" href="#polling">Polling pattern</a>
+    <a class="nav-link" href="#photo-urls">Photo URLs</a>
+    <a class="nav-link" href="#errors">Error format</a>
+  </div>
+</nav>
+
+<!-- ══ CONTENT ══════════════════════════════════════ -->
+<main class="content">
+
+  <!-- ── Intro ── -->
+  <div class="intro" id="overview">
+    <div class="page-title">SkillUp Chat <span>API</span></div>
+    <p class="page-desc">REST API for the group chat app. Register, send messages, share photos, and react with emoji — no WebSocket needed.</p>
+    <div class="meta-row">
+      <div class="meta-chip"><span class="dot"></span> Live at <code>37.60.249.140:3001</code></div>
+      <div class="meta-chip">JSON responses</div>
+      <div class="meta-chip">JWT auth</div>
+    </div>
+  </div>
+
+  <!-- ── Authentication ── -->
+  <section class="section" id="auth-section">
+    <div class="eyebrow">Getting started</div>
+    <h2>Authentication</h2>
+    <p>Protected endpoints require a <strong>Bearer token</strong> in the <code class="param">Authorization</code> header. Tokens are obtained from <code class="param">/auth/register</code> or <code class="param">/auth/login</code> and are valid for <strong>30 days</strong>.</p>
+
+    <div class="code-wrap">
+      <div class="code-label">Header format</div>
+      <div class="code-box">
+        <pre>Authorization: Bearer &lt;your_token&gt;</pre>
+        <button class="copy-btn" data-copy="Authorization: Bearer <your_token>">Copy</button>
+      </div>
+    </div>
+
+    <div class="note"><strong>Note:</strong> Every endpoint except <code class="param">GET /health</code>, <code class="param">POST /auth/register</code>, and <code class="param">POST /auth/login</code> requires a valid token.</div>
+  </section>
+
+  <!-- ── Health ── -->
+  <section class="section" id="health">
+    <div class="eyebrow">Health</div>
+    <h2>GET /health</h2>
+    <p>Server health check. No authentication required. Use this to verify the API is reachable.</p>
+
+    <div class="endpoint-pill">
+      <span class="ep-method ep-get">GET</span>
+      <span class="ep-path">/health</span>
+    </div>
+
+    <h3>Response 200</h3>
+    <div class="code-wrap">
+      <div class="code-box">
+        <pre id="c-health"></pre>
+        <button class="copy-btn" data-copy='{"status":"ok","timestamp":"2026-11-16T12:00:00.000Z"}'>Copy</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Register ── -->
+  <section class="section" id="register">
+    <div class="eyebrow">Auth</div>
+    <h2>POST /auth/register</h2>
+    <p>Create a new user account. Returns a JWT token that can be used immediately — no separate login needed.</p>
+
+    <div class="endpoint-pill">
+      <span class="ep-method ep-post">POST</span>
+      <span class="ep-path">/auth/register</span>
+    </div>
+
+    <h3>Request body — application/json</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code class="param">full_name</code></td><td><code class="type">string</code></td><td><span class="req">required</span></td><td>Your full name. Must be unique across all users.</td></tr>
+          <tr><td><code class="param">password</code></td><td><code class="type">string</code></td><td><span class="req">required</span></td><td>Any password — no complexity rules enforced.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-label">Example request</div>
+      <div class="code-box">
+        <pre id="c-reg-req"></pre>
+        <button class="copy-btn" data-copy='{"full_name":"John Doe","password":"mypassword"}'>Copy</button>
+      </div>
+    </div>
+
+    <h3>Response 201</h3>
+    <div class="code-wrap">
+      <div class="code-box">
+        <pre id="c-reg-res"></pre>
+        <button class="copy-btn" data-copy='{"token":"eyJhbGciOiJIUzI1NiJ9...","user":{"id":1,"full_name":"John Doe"}}'>Copy</button>
+      </div>
+    </div>
+
+    <h3>Error responses</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Status</th><th>error message</th><th>Cause</th></tr></thead>
+        <tbody>
+          <tr><td><span class="s400">400</span></td><td><code class="type">full_name and password are required</code></td><td>Missing field in body</td></tr>
+          <tr><td><span class="s409">409</span></td><td><code class="type">A user with this name already exists</code></td><td>Name already registered</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── Login ── -->
+  <section class="section" id="login">
+    <div class="eyebrow">Auth</div>
+    <h2>POST /auth/login</h2>
+    <p>Authenticate with an existing account and receive a fresh JWT token.</p>
+
+    <div class="endpoint-pill">
+      <span class="ep-method ep-post">POST</span>
+      <span class="ep-path">/auth/login</span>
+    </div>
+
+    <h3>Request body — application/json</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code class="param">full_name</code></td><td><code class="type">string</code></td><td><span class="req">required</span></td><td>Your registered full name</td></tr>
+          <tr><td><code class="param">password</code></td><td><code class="type">string</code></td><td><span class="req">required</span></td><td>Your password</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-label">Example request</div>
+      <div class="code-box">
+        <pre id="c-login-req"></pre>
+        <button class="copy-btn" data-copy='{"full_name":"John Doe","password":"mypassword"}'>Copy</button>
+      </div>
+    </div>
+
+    <h3>Response 200</h3>
+    <div class="code-wrap">
+      <div class="code-box">
+        <pre id="c-login-res"></pre>
+        <button class="copy-btn" data-copy='{"token":"eyJhbGciOiJIUzI1NiJ9...","user":{"id":1,"full_name":"John Doe"}}'>Copy</button>
+      </div>
+    </div>
+
+    <h3>Error responses</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Status</th><th>error message</th><th>Cause</th></tr></thead>
+        <tbody>
+          <tr><td><span class="s400">400</span></td><td><code class="type">full_name and password are required</code></td><td>Missing field</td></tr>
+          <tr><td><span class="s404">404</span></td><td><code class="type">User not found</code></td><td>Name not registered</td></tr>
+          <tr><td><span class="s401">401</span></td><td><code class="type">Incorrect password</code></td><td>Wrong password</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── GET /messages ── -->
+  <section class="section" id="messages-get">
+    <div class="eyebrow">Messages</div>
+    <h2>GET /messages</h2>
+    <p>Fetch all messages with their reactions. Poll this endpoint every 2–3 seconds to keep the chat in sync. Reactions on existing messages are always included, so a full fetch is the simplest and most correct approach.</p>
+
+    <div class="endpoint-pill">
+      <span class="ep-method ep-get">GET</span>
+      <span class="ep-path">/messages</span>
+    </div>
+
+    <h3>Query parameters</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code class="param">since</code></td><td><code class="type">integer</code></td><td><span class="opt">none</span></td><td>Return only messages with <code class="type">id</code> greater than this value. Useful for optimization — omit it to always get the full history (recommended for correct reaction sync).</td></tr>
+          <tr><td><code class="param">limit</code></td><td><code class="type">integer</code></td><td><code class="type">100</code></td><td>Maximum number of messages to return.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Response 200</h3>
+    <div class="code-wrap">
+      <div class="code-box">
+        <pre id="c-msgs-res"></pre>
+        <button class="copy-btn" data-copy='{"messages":[...]}'>Copy</button>
+      </div>
+    </div>
+
+    <h3>Message object fields</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code class="param">id</code></td><td><code class="type">integer</code></td><td>Unique message ID</td></tr>
+          <tr><td><code class="param">content</code></td><td><code class="type">string | null</code></td><td>Message text, or photo caption (can be null)</td></tr>
+          <tr><td><code class="param">type</code></td><td><code class="type">"text" | "photo"</code></td><td>Message type</td></tr>
+          <tr><td><code class="param">photo_url</code></td><td><code class="type">string | null</code></td><td>Relative path to photo (e.g. <code class="type">/uploads/file.jpg</code>). Prepend the base URL to get the full link.</td></tr>
+          <tr><td><code class="param">created_at</code></td><td><code class="type">string</code></td><td>ISO-like datetime (UTC)</td></tr>
+          <tr><td><code class="param">user.id</code></td><td><code class="type">integer</code></td><td>Sender's user ID</td></tr>
+          <tr><td><code class="param">user.full_name</code></td><td><code class="type">string</code></td><td>Sender's full name</td></tr>
+          <tr><td><code class="param">reactions</code></td><td><code class="type">array</code></td><td>List of reaction objects: <code class="type">{ emoji, user_id, full_name }</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── POST /messages ── -->
+  <section class="section" id="messages-post">
+    <div class="eyebrow">Messages</div>
+    <h2>POST /messages</h2>
+    <p>Send a plain text message. The created message is returned in the response.</p>
+
+    <div class="endpoint-pill">
+      <span class="ep-method ep-post">POST</span>
+      <span class="ep-path">/messages</span>
+    </div>
+
+    <h3>Request body — application/json</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code class="param">content</code></td><td><code class="type">string</code></td><td><span class="req">required</span></td><td>The message text</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-label">Example request</div>
+      <div class="code-box">
+        <pre id="c-send-req"></pre>
+        <button class="copy-btn" data-copy='{"content":"Hello everyone!"}'>Copy</button>
+      </div>
+    </div>
+
+    <h3>Response 201 — the created message</h3>
+    <div class="code-wrap">
+      <div class="code-box">
+        <pre id="c-send-res"></pre>
+        <button class="copy-btn" data-copy='{"id":3,"content":"Hello everyone!","type":"text","photo_url":null,"created_at":"...","user":{"id":1,"full_name":"John Doe"},"reactions":[]}'>Copy</button>
+      </div>
+    </div>
+
+    <h3>Error responses</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Status</th><th>error message</th><th>Cause</th></tr></thead>
+        <tbody>
+          <tr><td><span class="s400">400</span></td><td><code class="type">content is required</code></td><td>Empty or missing body field</td></tr>
+          <tr><td><span class="s401">401</span></td><td><code class="type">No token provided</code></td><td>Missing Authorization header</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── POST /messages/photo ── -->
+  <section class="section" id="messages-photo">
+    <div class="eyebrow">Messages</div>
+    <h2>POST /messages/photo</h2>
+    <p>Upload and send a photo. Use <code class="param">multipart/form-data</code> — do <strong>not</strong> set <code class="param">Content-Type: application/json</code> for this endpoint. Max file size is 10 MB, images only.</p>
+
+    <div class="endpoint-pill">
+      <span class="ep-method ep-post">POST</span>
+      <span class="ep-path">/messages/photo</span>
+    </div>
+
+    <h3>Form fields — multipart/form-data</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code class="param">photo</code></td><td><code class="type">file</code></td><td><span class="req">required</span></td><td>Image file (jpg, png, gif, webp…). Max 10 MB.</td></tr>
+          <tr><td><code class="param">caption</code></td><td><code class="type">string</code></td><td><span class="opt">optional</span></td><td>Text caption for the photo</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-label">Example — JavaScript fetch</div>
+      <div class="code-box">
+        <pre id="c-photo-req"></pre>
+        <button class="copy-btn" data-copy="const fd = new FormData();
+fd.append('photo', fileInput.files[0]);
+fd.append('caption', 'Look at this!');   // optional
+
+fetch('http://37.60.249.140:3001/messages/photo', {
+  method: 'POST',
+  headers: { Authorization: 'Bearer ' + token },
+  body: fd
+});">Copy</button>
+      </div>
+    </div>
+
+    <h3>Response 201 — the created message</h3>
+    <div class="code-wrap">
+      <div class="code-box">
+        <pre id="c-photo-res"></pre>
+        <button class="copy-btn" data-copy='{"id":4,"content":"Look at this!","type":"photo","photo_url":"/uploads/1700000000001-xyz5678.jpg","created_at":"...","user":{"id":1,"full_name":"John Doe"},"reactions":[]}'>Copy</button>
+      </div>
+    </div>
+
+    <h3>Error responses</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Status</th><th>error message</th><th>Cause</th></tr></thead>
+        <tbody>
+          <tr><td><span class="s400">400</span></td><td><code class="type">photo file is required</code></td><td>No file attached</td></tr>
+          <tr><td><span class="s400">400</span></td><td><code class="type">Only image files are allowed</code></td><td>Non-image MIME type</td></tr>
+          <tr><td><span class="s400">400</span></td><td><em>multer size error</em></td><td>File exceeds 10 MB</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── POST /messages/:id/react ── -->
+  <section class="section" id="messages-react">
+    <div class="eyebrow">Messages</div>
+    <h2>POST /messages/:id/react</h2>
+    <p>Add or remove an emoji reaction on a message. Calling the same endpoint with the same emoji <strong>twice toggles it off</strong> — no separate "remove" endpoint needed.</p>
+
+    <div class="endpoint-pill">
+      <span class="ep-method ep-post">POST</span>
+      <span class="ep-path">/messages/<span class="path-param">:id</span>/react</span>
+    </div>
+
+    <h3>URL parameter</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code class="param">:id</code></td><td><code class="type">integer</code></td><td>The ID of the message to react to</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Request body — application/json</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code class="param">emoji</code></td><td><code class="type">string</code></td><td><span class="req">required</span></td><td>Any emoji character, e.g. <code class="type">"👍"</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-label">Example request</div>
+      <div class="code-box">
+        <pre id="c-react-req"></pre>
+        <button class="copy-btn" data-copy='{"emoji":"👍"}'>Copy</button>
+      </div>
+    </div>
+
+    <h3>Response 200</h3>
+    <p>Returns the action taken (<code class="param">"added"</code> or <code class="param">"removed"</code>) and which message was affected.</p>
+    <div class="code-wrap">
+      <div class="code-box">
+        <pre id="c-react-res"></pre>
+        <button class="copy-btn" data-copy='{"action":"added","emoji":"👍","message_id":3}'>Copy</button>
+      </div>
+    </div>
+
+    <h3>Error responses</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Status</th><th>error message</th><th>Cause</th></tr></thead>
+        <tbody>
+          <tr><td><span class="s400">400</span></td><td><code class="type">emoji is required</code></td><td>Missing field</td></tr>
+          <tr><td><span class="s404">404</span></td><td><code class="type">Message not found</code></td><td>Invalid message ID</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── Polling ── -->
+  <section class="section" id="polling">
+    <div class="eyebrow">Guide</div>
+    <h2>Polling pattern</h2>
+    <p>The API uses polling — no WebSocket needed. Call <code class="param">GET /messages</code> every 2–3 seconds. Because reactions on old messages must also be reflected, always fetch the full list rather than using the <code class="param">since</code> parameter.</p>
+
+    <div class="code-wrap">
+      <div class="code-label">Recommended polling loop</div>
+      <div class="code-box">
+        <pre id="c-poll"></pre>
+        <button class="copy-btn" data-copy="const API = 'http://37.60.249.140:3001';
+let token = localStorage.getItem('token');
+
+async function fetchMessages() {
+  const res = await fetch(API + '/messages', {
+    headers: { Authorization: 'Bearer ' + token }
+  });
+  if (res.status === 401) return logout();
+  const { messages } = await res.json();
+  renderMessages(messages); // update your UI
+}
+
+// Initial load, then every 2.5 seconds
+fetchMessages();
+setInterval(fetchMessages, 2500);">Copy</button>
+      </div>
+    </div>
+
+    <div class="note"><strong>Tip:</strong> Track whether the user has scrolled up before updating the DOM. Only auto-scroll to the bottom if they were already at the bottom when new messages arrived.</div>
+  </section>
+
+  <!-- ── Photo URLs ── -->
+  <section class="section" id="photo-urls">
+    <div class="eyebrow">Guide</div>
+    <h2>Photo URLs</h2>
+    <p>The <code class="param">photo_url</code> field in a message is a relative server path like <code class="param">/uploads/filename.jpg</code>. To display the image, prepend the base URL:</p>
+
+    <div class="code-wrap">
+      <div class="code-label">Constructing the full URL</div>
+      <div class="code-box">
+        <pre id="c-photo-url"></pre>
+        <button class="copy-btn" data-copy="// msg.photo_url = '/uploads/1700000000001-abc.jpg'
+const src = 'http://37.60.249.140:3001' + msg.photo_url;
+
+// In HTML:
+// &lt;img src=&quot;http://37.60.249.140:3001/uploads/1700000000001-abc.jpg&quot;&gt;">Copy</button>
+      </div>
+    </div>
+
+    <div class="note">Photos are served publicly — no <code class="param">Authorization</code> header is needed in <code class="param">&lt;img&gt;</code> tags.</div>
+  </section>
+
+  <!-- ── Errors ── -->
+  <section class="section" id="errors">
+    <div class="eyebrow">Guide</div>
+    <h2>Error format</h2>
+    <p>Every error response follows the same shape — a JSON object with a single <code class="param">error</code> field containing a human-readable message:</p>
+
+    <div class="code-wrap">
+      <div class="code-box">
+        <pre id="c-error"></pre>
+        <button class="copy-btn" data-copy='{"error":"Human-readable description of what went wrong"}'>Copy</button>
+      </div>
+    </div>
+
+    <h3>Common HTTP status codes</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><span class="s400">400</span></td><td>Bad request — missing or invalid fields</td></tr>
+          <tr><td><span class="s401">401</span></td><td>Unauthorized — missing or invalid token</td></tr>
+          <tr><td><span class="s404">404</span></td><td>Not found — user or message doesn't exist</td></tr>
+          <tr><td><span class="s409">409</span></td><td>Conflict — e.g. username already taken</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+</div>
+
+<script>
+/* ── JSON syntax highlighter ───────────────────── */
+function hl(json) {
+  const e = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return e(json)
+    .replace(/"([^"]+)":/g,       '<span class="jk">"$1"</span>:')
+    .replace(/: "([^"]*?)"/g,     ': <span class="js">"$1"</span>')
+    .replace(/: (-?\d+\.?\d*)/g,  ': <span class="jn">$1</span>')
+    .replace(/: (true|false)/g,   ': <span class="jb">$1</span>')
+    .replace(/: (null)/g,         ': <span class="jl">null</span>');
+}
+
+/* ── Code content ───────────────────────────────── */
+const CODE = {
+  'c-health':     '{\n  "status": "ok",\n  "timestamp": "2026-11-16T12:00:00.000Z"\n}',
+  'c-reg-req':    '{\n  "full_name": "John Doe",\n  "password": "mypassword"\n}',
+  'c-reg-res':    '{\n  "token": "eyJhbGciOiJIUzI1NiJ9...",\n  "user": {\n    "id": 1,\n    "full_name": "John Doe"\n  }\n}',
+  'c-login-req':  '{\n  "full_name": "John Doe",\n  "password": "mypassword"\n}',
+  'c-login-res':  '{\n  "token": "eyJhbGciOiJIUzI1NiJ9...",\n  "user": {\n    "id": 1,\n    "full_name": "John Doe"\n  }\n}',
+  'c-msgs-res':   '{\n  "messages": [\n    {\n      "id": 1,\n      "content": "Hello everyone!",\n      "type": "text",\n      "photo_url": null,\n      "created_at": "2026-11-16T10:00:00",\n      "user": { "id": 1, "full_name": "John Doe" },\n      "reactions": [\n        { "emoji": "👍", "user_id": 2, "full_name": "Jane Smith" }\n      ]\n    },\n    {\n      "id": 2,\n      "content": "Look at this!",\n      "type": "photo",\n      "photo_url": "/uploads/1700000000001-abc.jpg",\n      "created_at": "2026-11-16T10:01:00",\n      "user": { "id": 2, "full_name": "Jane Smith" },\n      "reactions": []\n    }\n  ]\n}',
+  'c-send-req':   '{\n  "content": "Hello everyone!"\n}',
+  'c-send-res':   '{\n  "id": 3,\n  "content": "Hello everyone!",\n  "type": "text",\n  "photo_url": null,\n  "created_at": "2026-11-16T10:02:00",\n  "user": { "id": 1, "full_name": "John Doe" },\n  "reactions": []\n}',
+  'c-photo-req':  `const fd = new FormData();\nfd.append('photo', fileInput.files[0]);\nfd.append('caption', 'Look at this!');   // optional\n\nfetch('http://37.60.249.140:3001/messages/photo', {\n  method: 'POST',\n  headers: { Authorization: 'Bearer ' + token },\n  body: fd\n});`,
+  'c-photo-res':  '{\n  "id": 4,\n  "content": "Look at this!",\n  "type": "photo",\n  "photo_url": "/uploads/1700000000001-xyz5678.jpg",\n  "created_at": "2026-11-16T10:03:00",\n  "user": { "id": 1, "full_name": "John Doe" },\n  "reactions": []\n}',
+  'c-react-req':  '{\n  "emoji": "👍"\n}',
+  'c-react-res':  '{\n  "action": "added",\n  "emoji": "👍",\n  "message_id": 3\n}',
+  'c-poll':       `const API = 'http://37.60.249.140:3001';\nlet token = localStorage.getItem('token');\n\nasync function fetchMessages() {\n  const res = await fetch(API + '/messages', {\n    headers: { Authorization: 'Bearer ' + token }\n  });\n  if (res.status === 401) return logout();\n  const { messages } = await res.json();\n  renderMessages(messages); // update your UI\n}\n\n// Initial load, then every 2.5 seconds\nfetchMessages();\nsetInterval(fetchMessages, 2500);`,
+  'c-photo-url':  `// msg.photo_url = '/uploads/1700000000001-abc.jpg'\nconst src = 'http://37.60.249.140:3001' + msg.photo_url;\n\n// In HTML:\n// <img src="http://37.60.249.140:3001/uploads/1700000000001-abc.jpg">`,
+  'c-error':      '{\n  "error": "Human-readable description of what went wrong"\n}'
+};
+
+const JSON_BLOCKS = new Set(['c-health','c-reg-req','c-reg-res','c-login-req','c-login-res',
+  'c-msgs-res','c-send-req','c-send-res','c-photo-res','c-react-req','c-react-res','c-error']);
+
+Object.entries(CODE).forEach(([id, text]) => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = JSON_BLOCKS.has(id) ? hl(text) : text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+});
+
+/* ── Copy buttons ───────────────────────────────── */
+document.querySelectorAll('.copy-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const text = btn.dataset.copy
+      || btn.closest('.code-box').querySelector('pre').textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.textContent = 'Copied!';
+      btn.classList.add('ok');
+    } catch {
+      const pre = btn.closest('.code-box').querySelector('pre');
+      const range = document.createRange();
+      range.selectNodeContents(pre);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+      btn.textContent = 'Selected';
+    }
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('ok'); }, 2000);
+  });
+});
+
+/* ── Sidebar active section ─────────────────────── */
+const sections = document.querySelectorAll('.section[id], .intro[id]');
+const links    = document.querySelectorAll('.nav-link[href^="#"]');
+
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const a = document.querySelector(`.nav-link[href="#${e.target.id}"]`);
+      if (a) a.classList.add('active');
+    }
+  });
+}, { rootMargin: '-15% 0px -72% 0px', threshold: 0 });
+
+sections.forEach(s => io.observe(s));
+
+/* ── Theme toggle ───────────────────────────────── */
+const btn = document.getElementById('theme-btn');
+const root = document.documentElement;
+
+function applyTheme(dark) {
+  root.dataset.theme = dark ? 'dark' : 'light';
+  btn.textContent = dark ? '☀️ Light' : '🌙 Dark';
+  try { localStorage.setItem('su-docs-theme', dark ? 'dark' : 'light'); } catch {}
+}
+
+try {
+  const saved = localStorage.getItem('su-docs-theme');
+  if (saved) applyTheme(saved === 'dark');
+  else applyTheme(window.matchMedia('(prefers-color-scheme: dark)').matches);
+} catch { applyTheme(false); }
+
+btn.addEventListener('click', () => applyTheme(root.dataset.theme !== 'dark'));
+</script>

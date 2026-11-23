@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillUp Chat</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0d0d1a;
+      color: #e2e2f0;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ─── LOGIN ─── */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .login-card {
+      background: #1a1a2e;
+      border: 1px solid #2a2a45;
+      border-radius: 18px;
+      padding: 40px 36px;
+      width: 360px;
+    }
+
+    .login-logo {
+      font-size: 28px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .login-sub {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 28px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .field input {
+      background: #242437;
+      border: 1px solid #32324f;
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #e2e2f0;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .field input:focus { border-color: #7c6cff; }
+    .field input::placeholder { color: #555; }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, background 0.15s;
+    }
+    .btn:hover { opacity: 0.9; }
+
+    .btn-primary { background: #7c6cff; color: #fff; }
+    .btn-secondary {
+      background: transparent;
+      color: #7c6cff;
+      border: 1px solid #7c6cff;
+      margin-top: 8px;
+    }
+
+    .auth-error {
+      color: #ff6b6b;
+      font-size: 12px;
+      margin-top: 10px;
+      min-height: 16px;
+    }
+
+    /* ─── CHAT ─── */
+    #chat-screen {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .chat-header {
+      background: #1a1a2e;
+      border-bottom: 1px solid #2a2a45;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .chat-title { font-size: 17px; font-weight: 700; color: #fff; }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-badge {
+      font-size: 12px;
+      color: #888;
+      background: #242437;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .btn-logout {
+      background: none;
+      border: none;
+      color: #555;
+      font-size: 12px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .btn-logout:hover { color: #ff6b6b; background: #2a1a1a; }
+
+    /* ─── MESSAGES ─── */
+    #messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .msg-row {
+      display: flex;
+      gap: 10px;
+      max-width: 72%;
+    }
+    .msg-row.own {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+    .msg-row.other {
+      align-self: flex-start;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #7c6cff;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      align-self: flex-end;
+    }
+
+    .msg-col {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .msg-meta {
+      font-size: 11px;
+      color: #555;
+    }
+    .msg-row.own .msg-meta { text-align: right; }
+
+    .bubble {
+      background: #1f1f35;
+      padding: 9px 14px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.55;
+      word-break: break-word;
+    }
+    .msg-row.own .bubble { background: #7c6cff; }
+
+    .bubble img {
+      display: block;
+      max-width: 280px;
+      max-height: 300px;
+      border-radius: 10px;
+      margin-top: 6px;
+      cursor: pointer;
+    }
+    .bubble img:first-child { margin-top: 0; }
+
+    /* ─── REACTIONS ─── */
+    .reactions-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 2px;
+    }
+
+    .rxn {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      background: #1f1f35;
+      border: 1px solid #32324f;
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      user-select: none;
+    }
+    .rxn:hover, .rxn.mine { border-color: #7c6cff; background: #2a2048; }
+    .rxn-count { font-size: 11px; color: #888; }
+
+    .add-rxn {
+      display: none;
+      background: none;
+      border: 1px dashed #32324f;
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 12px;
+      color: #555;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .msg-row:hover .add-rxn { display: flex; align-items: center; gap: 3px; }
+    .add-rxn:hover { border-color: #7c6cff; color: #7c6cff; }
+
+    /* ─── EMOJI PICKER ─── */
+    .emoji-picker {
+      position: fixed;
+      background: #1f1f35;
+      border: 1px solid #32324f;
+      border-radius: 14px;
+      padding: 10px;
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      width: 230px;
+      z-index: 999;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    .emoji-opt {
+      font-size: 22px;
+      padding: 4px 5px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.1s;
+      line-height: 1;
+    }
+    .emoji-opt:hover { background: #32324f; }
+
+    /* ─── INPUT AREA ─── */
+    .input-area {
+      background: #1a1a2e;
+      border-top: 1px solid #2a2a45;
+      padding: 12px 16px;
+      flex-shrink: 0;
+    }
+
+    #photo-preview {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      background: #242437;
+      border-radius: 10px;
+      padding: 8px 12px;
+    }
+
+    #photo-preview img {
+      height: 56px;
+      width: 56px;
+      object-fit: cover;
+      border-radius: 7px;
+    }
+
+    .preview-info {
+      flex: 1;
+      font-size: 12px;
+      color: #888;
+    }
+
+    .btn-remove-photo {
+      background: none;
+      border: none;
+      color: #ff6b6b;
+      font-size: 18px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 2px 4px;
+    }
+
+    /* ─── FILE PREVIEW ─── */
+    #file-preview {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      background: #242437;
+      border-radius: 10px;
+      padding: 8px 12px;
+    }
+    .file-prev-icon { font-size: 22px; flex-shrink: 0; }
+    .file-prev-name {
+      flex: 1; font-size: 13px; color: #ccc;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .btn-remove-file {
+      background: none; border: none; color: #ff6b6b;
+      font-size: 18px; cursor: pointer; line-height: 1; padding: 2px 4px;
+    }
+
+    /* ─── FILE CARD in bubble ─── */
+    .file-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,.07);
+      border-radius: 10px;
+      padding: 10px 12px;
+      min-width: 180px;
+      max-width: 260px;
+    }
+    .fc-icon { font-size: 24px; flex-shrink: 0; }
+    .fc-info { flex: 1; min-width: 0; }
+    .fc-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fc-caption { font-size: 12px; opacity: .65; margin-top: 2px; }
+    .fc-dl {
+      flex-shrink: 0; width: 32px; height: 32px;
+      background: rgba(255,255,255,.12); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      text-decoration: none; color: inherit; font-size: 14px;
+      transition: background .15s;
+    }
+    .fc-dl:hover { background: rgba(255,255,255,.24); }
+
+    .input-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .btn-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid #32324f;
+      background: #242437;
+      color: #888;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-icon:hover { border-color: #7c6cff; color: #7c6cff; }
+
+    #message-input {
+      flex: 1;
+      background: #242437;
+      border: 1px solid #32324f;
+      border-radius: 20px;
+      padding: 10px 16px;
+      color: #e2e2f0;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      resize: none;
+      max-height: 120px;
+      overflow-y: auto;
+      line-height: 1.5;
+      transition: border-color 0.2s;
+    }
+    #message-input:focus { border-color: #7c6cff; }
+    #message-input::placeholder { color: #555; }
+
+    .btn-send {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: #7c6cff;
+      color: #fff;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .btn-send:hover { background: #6a5ae0; }
+
+    /* ─── STATUS BAR ─── */
+    .status-bar {
+      text-align: center;
+      font-size: 11px;
+      color: #444;
+      padding: 3px;
+      min-height: 18px;
+      flex-shrink: 0;
+    }
+    .status-bar.error { color: #ff6b6b; }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #32324f; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- ─── LOGIN SCREEN ─── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">SkillUp Chat</div>
+    <div class="login-sub">Enter your name and password to continue</div>
+    <div class="field">
+      <input type="text" id="inp-name" placeholder="Full name" autocomplete="off">
+      <input type="password" id="inp-pass" placeholder="Password" autocomplete="off">
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">Log in</button>
+    <button class="btn btn-secondary" onclick="doRegister()">Create account</button>
+    <div class="auth-error" id="auth-error"></div>
+  </div>
+</div>
+
+<!-- ─── CHAT SCREEN ─── -->
+<div id="chat-screen">
+  <div class="chat-header">
+    <span class="chat-title">SkillUp Chat</span>
+    <div class="header-right">
+      <span class="user-badge" id="user-label"></span>
+      <button class="btn-logout" onclick="logout()">Sign out</button>
+    </div>
+  </div>
+
+  <div id="messages-container"></div>
+  <div class="status-bar" id="status-bar"></div>
+
+  <div class="input-area">
+    <div id="photo-preview">
+      <img id="preview-img" src="" alt="">
+      <span class="preview-info">Photo selected · add a caption below (optional)</span>
+      <button class="btn-remove-photo" onclick="clearPhoto()" title="Remove photo">×</button>
+    </div>
+    <div id="file-preview">
+      <span class="file-prev-icon">📎</span>
+      <span class="file-prev-name" id="file-preview-name"></span>
+      <span class="preview-info" style="flex-shrink:0">File attached · add a caption below (optional)</span>
+      <button class="btn-remove-file" onclick="clearFile()" title="Remove file">×</button>
+    </div>
+    <div class="input-row">
+      <label class="btn-icon" for="photo-input" title="Send a photo">📷</label>
+      <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="onPhotoSelected(this)">
+      <label class="btn-icon" for="doc-input" title="Attach a file (PDF, Word, TXT)">📎</label>
+      <input type="file" id="doc-input" accept=".pdf,.doc,.docx,.txt" style="display:none" onchange="onDocSelected(this)">
+      <textarea id="message-input" rows="1" placeholder="Type a message…"
+        onkeydown="onKeyDown(event)"
+        oninput="autoGrow(this)"></textarea>
+      <button class="btn-send" onclick="sendMessage()" title="Send">➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+//  CONFIGURE THIS before testing locally or on VPS
+// ════════════════════════════════════════════
+const API_URL = 'http://37.60.249.140:3001'; // VPS
+// ════════════════════════════════════════════
+
+const EMOJIS = ['👍','❤️','😂','🔥','😮','😢','👏','🎉','🙏','💯','😍','🤔'];
+
+let token       = localStorage.getItem('su_token');
+let currentUser = JSON.parse(localStorage.getItem('su_user') || 'null');
+let pollTimer   = null;
+let isFetching  = false;
+let pendingPhoto = null;
+let pendingFile  = null;
+
+// ─── AUTH ─────────────────────────────────
+
+async function doRegister() {
+  const name = document.getElementById('inp-name').value.trim();
+  const pass = document.getElementById('inp-pass').value;
+  if (!name || !pass) return setAuthError('Please fill in both fields.');
+  await authRequest('/auth/register', name, pass);
+}
+
+async function doLogin() {
+  const name = document.getElementById('inp-name').value.trim();
+  const pass = document.getElementById('inp-pass').value;
+  if (!name || !pass) return setAuthError('Please fill in both fields.');
+  await authRequest('/auth/login', name, pass);
+}
+
+async function authRequest(path, full_name, password) {
+  setAuthError('');
+  try {
+    const res = await fetch(API_URL + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ full_name, password })
+    });
+    const data = await res.json();
+    if (!res.ok) return setAuthError(data.error || 'Something went wrong.');
+    token = data.token;
+    currentUser = data.user;
+    localStorage.setItem('su_token', token);
+    localStorage.setItem('su_user', JSON.stringify(currentUser));
+    openChat();
+  } catch {
+    setAuthError('Cannot reach server. Check API_URL in the code.');
+  }
+}
+
+function logout() {
+  clearInterval(pollTimer);
+  token = null; currentUser = null;
+  localStorage.removeItem('su_token');
+  localStorage.removeItem('su_user');
+  clearPhoto(); clearFile();
+  document.getElementById('chat-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('messages-container').innerHTML = '';
+}
+
+function setAuthError(msg) {
+  document.getElementById('auth-error').textContent = msg;
+}
+
+// ─── CHAT ─────────────────────────────────
+
+function openChat() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('chat-screen').style.display = 'flex';
+  document.getElementById('user-label').textContent = currentUser.full_name;
+  fetchMessages();
+  pollTimer = setInterval(fetchMessages, 2500);
+}
+
+async function fetchMessages() {
+  if (isFetching) return;
+  isFetching = true;
+  try {
+    const res = await fetch(API_URL + '/messages', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (res.status === 401) return logout();
+    const { messages } = await res.json();
+    setStatus('');
+    renderMessages(messages);
+  } catch {
+    setStatus('Connection lost…', true);
+  } finally {
+    isFetching = false;
+  }
+}
+
+// ─── RENDER ───────────────────────────────
+
+function renderMessages(messages) {
+  const container = document.getElementById('messages-container');
+  const atBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 60;
+
+  container.innerHTML = messages.map(renderMessage).join('');
+
+  if (atBottom) container.scrollTop = container.scrollHeight;
+}
+
+function renderMessage(msg) {
+  const own     = msg.user.id === currentUser.id;
+  const initials = msg.user.full_name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  const time    = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  // Group reactions
+  const groups = {};
+  (msg.reactions || []).forEach(r => {
+    if (!groups[r.emoji]) groups[r.emoji] = { count: 0, mine: false, names: [] };
+    groups[r.emoji].count++;
+    if (r.user_id === currentUser.id) groups[r.emoji].mine = true;
+    groups[r.emoji].names.push(r.full_name);
+  });
+
+  const reactionHtml = Object.entries(groups).map(([emoji, g]) => `
+    <button class="rxn ${g.mine ? 'mine' : ''}" title="${g.names.join(', ')}"
+      onclick="toggleReaction(${msg.id}, '${emoji}')">
+      ${emoji}<span class="rxn-count">${g.count}</span>
+    </button>`).join('');
+
+  let content = '';
+  if (msg.type === 'photo') {
+    const imgSrc = API_URL + msg.photo_url;
+    content = (msg.content ? `<div>${esc(msg.content)}</div>` : '') +
+      `<img src="${imgSrc}" alt="photo" onclick="window.open('${imgSrc}','_blank')" loading="lazy">`;
+  } else if (msg.type === 'file') {
+    const fileUrl = API_URL + msg.photo_url;
+    const ext = (msg.file_name || '').split('.').pop().toLowerCase();
+    const icon = ext === 'pdf' ? '📄' : (ext === 'doc' || ext === 'docx') ? '📝' : ext === 'txt' ? '📃' : '📎';
+    content = `<div class="file-card">
+      <span class="fc-icon">${icon}</span>
+      <div class="fc-info">
+        <div class="fc-name">${esc(msg.file_name || 'File')}</div>
+        ${msg.content ? `<div class="fc-caption">${esc(msg.content)}</div>` : ''}
+      </div>
+      <a class="fc-dl" href="${fileUrl}" target="_blank" title="Download">⬇</a>
+    </div>`;
+  } else {
+    content = esc(msg.content || '');
+  }
+
+  const avatarHtml = `<div class="avatar">${initials}</div>`;
+  const metaHtml   = `<div class="msg-meta">${own ? '' : msg.user.full_name + ' · '}${time}</div>`;
+
+  return `
+    <div class="msg-row ${own ? 'own' : 'other'}">
+      ${own ? '' : avatarHtml}
+      <div class="msg-col">
+        ${metaHtml}
+        <div class="bubble">${content}</div>
+        <div class="reactions-row">
+          ${reactionHtml}
+          <button class="add-rxn" onclick="openEmojiPicker(event, ${msg.id})">+ 😊</button>
+        </div>
+      </div>
+      ${own ? avatarHtml : ''}
+    </div>`;
+}
+
+function esc(str) {
+  return str
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;')
+    .replace(/\n/g,'<br>');
+}
+
+// ─── SEND ─────────────────────────────────
+
+async function sendMessage() {
+  const input   = document.getElementById('message-input');
+  const caption = input.value.trim();
+
+  if (pendingFile) {
+    const fd = new FormData();
+    fd.append('file', pendingFile);
+    if (caption) fd.append('caption', caption);
+    clearFile();
+    input.value = '';
+    input.style.height = '';
+    try {
+      setStatus('Uploading…');
+      const res = await fetch(API_URL + '/messages/file', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: fd
+      });
+      if (!res.ok) throw new Error();
+      setStatus('');
+      await fetchMessages();
+    } catch {
+      setStatus('Upload failed.', true);
+    }
+    return;
+  }
+
+  if (pendingPhoto) {
+    const fd = new FormData();
+    fd.append('photo', pendingPhoto);
+    if (caption) fd.append('caption', caption);
+    clearPhoto();
+    input.value = '';
+    input.style.height = '';
+    try {
+      setStatus('Uploading…');
+      const res = await fetch(API_URL + '/messages/photo', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: fd
+      });
+      if (!res.ok) throw new Error();
+      setStatus('');
+      await fetchMessages();
+    } catch {
+      setStatus('Upload failed.', true);
+    }
+    return;
+  }
+
+  if (!caption) return;
+  input.value = '';
+  input.style.height = '';
+
+  try {
+    await fetch(API_URL + '/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ content: caption })
+    });
+    await fetchMessages();
+  } catch {
+    setStatus('Failed to send.', true);
+  }
+}
+
+function onKeyDown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoGrow(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ─── PHOTO ────────────────────────────────
+
+function onDocSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  clearPhoto();
+  pendingFile = file;
+  document.getElementById('file-preview-name').textContent = file.name;
+  document.getElementById('file-preview').style.display = 'flex';
+  input.value = '';
+}
+
+function clearFile() {
+  pendingFile = null;
+  document.getElementById('file-preview').style.display = 'none';
+}
+
+function onPhotoSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  clearFile();
+  pendingPhoto = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('preview-img').src = e.target.result;
+    document.getElementById('photo-preview').style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function clearPhoto() {
+  pendingPhoto = null;
+  document.getElementById('photo-preview').style.display = 'none';
+  document.getElementById('preview-img').src = '';
+}
+
+// ─── REACTIONS ────────────────────────────
+
+async function toggleReaction(messageId, emoji) {
+  try {
+    await fetch(`${API_URL}/messages/${messageId}/react`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ emoji })
+    });
+    await fetchMessages();
+  } catch {
+    setStatus('Reaction failed.', true);
+  }
+}
+
+function openEmojiPicker(e, messageId) {
+  e.stopPropagation();
+  document.querySelectorAll('.emoji-picker').forEach(el => el.remove());
+
+  const picker = document.createElement('div');
+  picker.className = 'emoji-picker';
+
+  EMOJIS.forEach(emoji => {
+    const span = document.createElement('span');
+    span.className = 'emoji-opt';
+    span.textContent = emoji;
+    span.onclick = ev => {
+      ev.stopPropagation();
+      picker.remove();
+      toggleReaction(messageId, emoji);
+    };
+    picker.appendChild(span);
+  });
+
+  const rect = e.currentTarget.getBoundingClientRect();
+  picker.style.left = Math.min(rect.left, window.innerWidth - 240) + 'px';
+  picker.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
+  document.body.appendChild(picker);
+
+  document.addEventListener('click', () => picker.remove(), { once: true });
+}
+
+// ─── HELPERS ──────────────────────────────
+
+function setStatus(msg, isError = false) {
+  const el = document.getElementById('status-bar');
+  el.textContent = msg;
+  el.className = 'status-bar' + (isError ? ' error' : '');
+}
+
+// ─── INIT ─────────────────────────────────
+if (token && currentUser) openChat();
+</script>
+</body>
+</html>
